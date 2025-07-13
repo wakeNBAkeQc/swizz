@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+4w5C5Tg9HOfFpM9QubZsH4wMB36n8CDddXqpPyMo=" crossorigin="" />
+    <!-- Use the locally installed Leaflet files instead of the CDN -->
+    <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
     <title>Carte</title>
 </head>
@@ -17,7 +18,8 @@
     <h1>Carte interactive</h1>
     <div id="map" style="height: 80vh;"></div>
 </main>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j6Ps3kwKvfYI+1nv1Dj6ww2cJaIcJfLkA/SmrE4=" crossorigin=""></script>
+<!-- Load Leaflet from local dependencies -->
+<script src="node_modules/leaflet/dist/leaflet.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
