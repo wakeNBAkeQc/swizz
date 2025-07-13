@@ -1,2 +1,47 @@
-index.html
-README.md
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Carte des utilisateurs</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha256-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC0=" crossorigin=""/>
+<style>
+  #map { height: 100vh; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha256-ds5oE2prSeZnLGUC+9CgwVUFp3kxcPkTt3FOpFk0E4Y=" crossorigin=""></script>
+<script>
+// Initialize map
+var map = L.map('map').setView([0, 0], 2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+var stored = JSON.parse(localStorage.getItem('userPin'));
+var marker;
+if (stored) {
+  marker = L.marker(stored.latlng).addTo(map);
+  marker.bindPopup('Age : ' + stored.age + '<br>Genre : ' + stored.gender);
+}
+
+function addMarker(e) {
+  if (marker) {
+    alert('Vous avez déjà placé votre marqueur.');
+    return;
+  }
+  var age = prompt('Quel est votre âge ?');
+  if (!age) return;
+  var gender = prompt("Votre genre (homme/femme) ?");
+  if (!gender) return;
+  marker = L.marker(e.latlng).addTo(map);
+  marker.bindPopup('Age : ' + age + '<br>Genre : ' + gender).openPopup();
+  localStorage.setItem('userPin', JSON.stringify({latlng: e.latlng, age: age, gender: gender}));
+}
+
+map.on('click', addMarker);
+</script>
+</body>
+</html>
