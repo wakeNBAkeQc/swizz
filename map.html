@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Use the locally installed Leaflet files instead of the CDN -->
-    <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css" />
+    <!-- Leaflet CSS with CDN fallback -->
+    <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css" onerror="this.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'" />
     <link rel="stylesheet" href="style.css">
     <title>Carte</title>
 </head>
 <body>
 <nav>
+    <img src="logo.svg" alt="Zwizz" class="logo">
     <a href="accueil.html">Accueil</a>
     <a href="map.html">Carte</a>
     <a href="profil.html">Profil</a>
@@ -18,8 +19,8 @@
     <h1>Carte interactive</h1>
     <div id="map" style="height: 80vh;"></div>
 </main>
-<!-- Load Leaflet from local dependencies -->
-<script src="node_modules/leaflet/dist/leaflet.js"></script>
+<!-- Load Leaflet with CDN fallback -->
+<script src="node_modules/leaflet/dist/leaflet.js" onerror="this.onerror=null;this.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'"></script>
 <script src="script.js"></script>
 </body>
 </html>
