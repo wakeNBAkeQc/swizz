@@ -4,6 +4,7 @@ body {
     padding: 0;
     background: linear-gradient(to bottom, #fff, #ffe6f2);
     color: #333;
+    animation: fadeIn 0.6s ease-in;
 }
 
 /* Faded logo watermark across all pages */
@@ -68,6 +69,22 @@ nav {
     to { transform: scale(1); opacity: 1; }
 }
 
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-section {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.6s forwards ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 nav .logo {
     height: 40px;
     margin-right: 1em;
@@ -94,7 +111,7 @@ nav a:hover {
 main {
     max-width: 800px;
     margin: 2em auto;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.9);
     padding: 2em;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -107,11 +124,12 @@ main {
     color: #fff;
     text-decoration: none;
     border-radius: 4px;
-    transition: background 0.3s ease;
+    transition: background 0.3s ease, transform 0.3s ease;
 }
 
 .button:hover {
     background: linear-gradient(45deg, #800080, #ff0000);
+    transform: scale(1.05);
 }
 
 form {
