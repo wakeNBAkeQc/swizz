@@ -24,6 +24,8 @@ function savePins(pins) {
     localStorage.setItem('pins', JSON.stringify(pins));
 }
 
+let userMarker = null;
+
 function initProfileForm() {
     const form = document.getElementById('profile-form');
     if (!form) return;
@@ -48,9 +50,18 @@ function initMap() {
     }).addTo(map);
 
     const pins = getPins();
-    pins.forEach(p => {
-        L.marker([p.lat, p.lng]).addTo(map)
+    const userIndex = parseInt(localStorage.getItem('userPinIndex'), 10);
+    pins.forEach((p, idx) => {
+        const marker = L.marker([p.lat, p.lng]).addTo(map)
             .bindPopup(p.age + ' ans – ' + p.gender);
+        if (idx === userIndex) {
+            userMarker = marker;
+            marker.on('click', () => {
+                if (confirm('Supprimer ce pin ?')) {
+                    removeUserPin();
+                }
+            });
+        }
     });
 
     map.on('click', e => {
@@ -63,12 +74,18 @@ function initMap() {
             alert('Veuillez remplir votre âge et genre dans le profil.');
             return;
         }
-        L.marker(e.latlng).addTo(map)
+        const marker = L.marker(e.latlng).addTo(map)
             .bindPopup(info.age + ' ans – ' + info.gender)
             .openPopup();
         pins.push({ lat: e.latlng.lat, lng: e.latlng.lng, age: info.age, gender: info.gender });
         savePins(pins);
         localStorage.setItem('userPinIndex', pins.length - 1);
+        userMarker = marker;
+        userMarker.on('click', () => {
+            if (confirm('Supprimer ce pin ?')) {
+                removeUserPin();
+            }
+        });
     });
 }
 
@@ -78,12 +95,19 @@ function removeUserPin() {
         alert("Vous n'avez pas encore placé de pin.");
         return;
     }
+    if (!confirm('Supprimer définitivement votre pin ?')) {
+        return;
+    }
     const pins = getPins();
     if (pins[index]) {
         pins.splice(index, 1);
         savePins(pins);
     }
     localStorage.removeItem('userPinIndex');
+    if (userMarker) {
+        userMarker.remove();
+        userMarker = null;
+    }
     location.reload();
 }
 
