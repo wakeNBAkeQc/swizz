@@ -65,12 +65,15 @@ function escapeHtml(str) {
 }
 
 function logoutUser() {
+    if (window.firebase?.auth) {
+        firebase.auth().signOut().catch(() => {});
+    }
     localStorage.removeItem('ageVerified');
     localStorage.removeItem('birthDate');
     localStorage.removeItem('userInfo');
     localStorage.removeItem('pins');
     localStorage.removeItem('userPinIndex');
-    window.location.href = 'index.html';
+    window.location.href = 'login.html';
 }
 
 function cleanupPins() {
@@ -398,6 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
     cleanupPins();
     initProfileForm();
+    initAuthGuard(document.body.dataset.auth === 'required');
     displayRandomProfiles();
     displayFavorites();
     const btn = document.getElementById('remove-pin');
