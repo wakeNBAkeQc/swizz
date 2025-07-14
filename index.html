@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta http-equiv="refresh" content="0; URL=accueil.html">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Redirection</title>
+  <script>
+    if (!localStorage.getItem('ageVerified')) {
+      window.location.href = 'age.html';
+    } else {
+      window.location.href = 'accueil.html';
+    }
+  </script>
 </head>
 <body>
-  <p>Redirection vers <a href="accueil.html">l'accueil</a>...</p>
+  <p>Redirection...</p>
 </body>
 </html>

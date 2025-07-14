@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <title>Vérification d'age</title>
+</head>
+<body>
+<main>
+  <h1>Vérification d'age</h1>
+  <form id="age-form">
+    <label for="dob">Date de naissance</label>
+    <input type="date" id="dob" required />
+    <button type="submit" class="button">Entrer</button>
+  </form>
+  <p id="age-error" style="color:red; display:none;">Vous devez avoir au moins 18 ans pour accéder au site.</p>
+</main>
+<script src="age-check.js"></script>
+</body>
+</html>
