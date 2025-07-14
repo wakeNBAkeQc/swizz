@@ -103,6 +103,9 @@ function initProfileForm() {
 }
 
 function initMap() {
+    // Ensure only one pin exists before initializing the map
+    cleanupPins();
+
     const mapEl = document.getElementById('map');
     if (!mapEl) return;
 
