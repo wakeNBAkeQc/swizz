@@ -383,6 +383,7 @@ function applyFilters() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
     cleanupPins();
     initProfileForm();
     initMap();
