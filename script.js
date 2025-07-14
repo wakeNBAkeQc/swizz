@@ -106,6 +106,14 @@ function initMap() {
     // Ensure only one pin exists before initializing the map
     cleanupPins();
 
+    // Listen for storage changes from other tabs to keep state in sync
+    window.addEventListener('storage', e => {
+        if (e.key === 'pins' || e.key === 'userPinIndex') {
+            cleanupPins();
+            location.reload();
+        }
+    });
+
     const mapEl = document.getElementById('map');
     if (!mapEl) return;
 
@@ -142,6 +150,7 @@ function initMap() {
     });
 
     map.on('click', e => {
+        cleanupPins();
         if (localStorage.getItem('userPinIndex') !== null || userMarker) {
             alert('Vous avez déjà ajouté un pin.');
             return;
