@@ -56,11 +56,7 @@ function initMap() {
             .bindPopup(p.age + ' ans – ' + p.gender);
         if (idx === userIndex) {
             userMarker = marker;
-            marker.on('click', () => {
-                if (confirm('Supprimer ce pin ?')) {
-                    removeUserPin();
-                }
-            });
+            marker.on('click', removeUserPin);
         }
     });
 
@@ -81,11 +77,7 @@ function initMap() {
         savePins(pins);
         localStorage.setItem('userPinIndex', pins.length - 1);
         userMarker = marker;
-        userMarker.on('click', () => {
-            if (confirm('Supprimer ce pin ?')) {
-                removeUserPin();
-            }
-        });
+        userMarker.on('click', removeUserPin);
     });
 }
 
