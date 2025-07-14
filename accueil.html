@@ -82,7 +82,22 @@
       }
     </style>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script>
+      const leafletCss = document.createElement('link');
+      leafletCss.rel = 'stylesheet';
+      const localCssPath = '/node_modules/leaflet/dist/leaflet.css';
+      fetch(localCssPath, { method: 'HEAD' }).then(resp => {
+        if (resp.ok) {
+          leafletCss.href = localCssPath;
+        } else {
+          leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        }
+        document.head.appendChild(leafletCss);
+      }).catch(() => {
+        leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(leafletCss);
+      });
+    </script>
   </head>
   <body>
     <nav>
@@ -205,7 +220,22 @@
       </section>
     </main>
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+      const leafletScript = document.createElement('script');
+      leafletScript.onload = () => {
+        if (typeof initMiniMap === 'function') initMiniMap();
+      };
+      const localJsPath = '/node_modules/leaflet/dist/leaflet.js';
+      fetch(localJsPath, { method: 'HEAD' }).then(resp => {
+        leafletScript.src = resp.ok
+          ? localJsPath
+          : 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        document.body.appendChild(leafletScript);
+      }).catch(() => {
+        leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        document.body.appendChild(leafletScript);
+      });
+    </script>
     <script src="script.js"></script>
     <script>
       function initMiniMap() {
@@ -230,7 +260,6 @@
 
       document.addEventListener("DOMContentLoaded", () => {
         displayRandomProfiles();
-        initMiniMap();
       });
     </script>
   </body>

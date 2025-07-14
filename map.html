@@ -4,7 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Leaflet CSS with CDN fallback -->
-    <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css" onerror="this.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'" />
+    <script>
+      const leafletCss = document.createElement('link');
+      leafletCss.rel = 'stylesheet';
+      const localCssPath = '/node_modules/leaflet/dist/leaflet.css';
+      fetch(localCssPath, { method: 'HEAD' }).then(resp => {
+        if (resp.ok) {
+          leafletCss.href = localCssPath;
+        } else {
+          leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        }
+        document.head.appendChild(leafletCss);
+      }).catch(() => {
+        leafletCss.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(leafletCss);
+      });
+    </script>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <title>Carte</title>
@@ -44,7 +59,22 @@
     </div>
 </main>
 <!-- Load Leaflet with CDN fallback -->
-<script src="node_modules/leaflet/dist/leaflet.js" onerror="this.onerror=null;this.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'"></script>
+<script>
+  const leafletScript = document.createElement('script');
+  leafletScript.onload = () => {
+    if (typeof initMap === 'function') initMap();
+  };
+  const localJsPath = '/node_modules/leaflet/dist/leaflet.js';
+  fetch(localJsPath, { method: 'HEAD' }).then(resp => {
+    leafletScript.src = resp.ok
+      ? localJsPath
+      : 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    document.body.appendChild(leafletScript);
+  }).catch(() => {
+    leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    document.body.appendChild(leafletScript);
+  });
+</script>
 <script src="script.js"></script>
 </body>
 </html>
