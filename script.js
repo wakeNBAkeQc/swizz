@@ -34,6 +34,15 @@ function savePins(pins) {
 
 let userMarker = null;
 
+function logoutUser() {
+    localStorage.removeItem('ageVerified');
+    localStorage.removeItem('birthDate');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('pins');
+    localStorage.removeItem('userPinIndex');
+    window.location.href = 'index.html';
+}
+
 function cleanupPins() {
     let pins = getPins();
     let index = parseInt(localStorage.getItem('userPinIndex'), 10);
@@ -232,5 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('remove-pin');
     if (btn) {
         btn.addEventListener('click', removeUserPin);
+    }
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', e => {
+            e.preventDefault();
+            logoutUser();
+        });
     }
 });
