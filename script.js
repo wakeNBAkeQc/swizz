@@ -142,7 +142,16 @@ function initMap() {
     handleZoom();
 }
 
-function removeUserPin() {
+function removeUserPin(e) {
+    if (e) {
+        if (e.originalEvent) {
+            e.originalEvent.stopPropagation();
+            e.originalEvent.preventDefault();
+        } else if (e.stopPropagation) {
+            e.stopPropagation();
+            if (e.preventDefault) e.preventDefault();
+        }
+    }
     const index = parseInt(localStorage.getItem('userPinIndex'), 10);
     if (Number.isNaN(index)) {
         alert("Vous n'avez pas encore placé de pin.");
