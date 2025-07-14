@@ -16,12 +16,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const dobStr = document.getElementById('dob').value;
     if (!dobStr) return;
     const age = calculateAge(new Date(dobStr));
-    if (age >= 18) {
+    const policyAccepted = document.getElementById('policy-check')?.checked;
+    const ageErr = document.getElementById('age-error');
+    const policyErr = document.getElementById('policy-error');
+    if (ageErr) ageErr.style.display = 'none';
+    if (policyErr) policyErr.style.display = 'none';
+    if (age >= 18 && policyAccepted) {
       localStorage.setItem('ageVerified', 'true');
       localStorage.setItem('birthDate', dobStr);
       window.location.href = 'accueil.html';
     } else {
-      document.getElementById('age-error').style.display = 'block';
+      if (age < 18 && ageErr) ageErr.style.display = 'block';
+      if (!policyAccepted && policyErr) policyErr.style.display = 'block';
     }
   });
 });

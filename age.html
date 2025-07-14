@@ -13,9 +13,14 @@
   <form id="age-form">
     <label for="dob">Date de naissance</label>
     <input type="date" id="dob" required />
+    <label style="margin-top:1em;">
+      <input type="checkbox" id="policy-check" />
+      J'accepte la <a href="politique.html" target="_blank">politique d'utilisation</a>
+    </label>
     <button type="submit" class="button">Entrer</button>
   </form>
   <p id="age-error" style="color:red; display:none;">Vous devez avoir au moins 18 ans pour accéder au site.</p>
+  <p id="policy-error" style="color:red; display:none;">Vous devez accepter la politique d'utilisation pour continuer.</p>
 </main>
 <script src="age-check.js"></script>
 </body>
