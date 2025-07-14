@@ -1,3 +1,7 @@
+if(!localStorage.getItem("ageVerified") && !location.pathname.endsWith("age.html")){
+  window.location.href="age.html";
+}
+
 function loadUserInfo() {
     const data = localStorage.getItem('userInfo');
     return data ? JSON.parse(data) : {};
