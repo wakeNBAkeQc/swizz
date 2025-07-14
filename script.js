@@ -11,6 +11,7 @@ function saveUserInfo(info) {
         if (pins[index]) {
             pins[index].age = info.age;
             pins[index].gender = info.gender;
+            pins[index].photo = info.photo;
             savePins(pins);
         }
     }
@@ -32,9 +33,20 @@ function initProfileForm() {
     const info = loadUserInfo();
     if (info.age) form.age.value = info.age;
     if (info.gender) form.gender.value = info.gender;
+    let photoData = info.photo || null;
+    const photoInput = document.getElementById('photo');
+    if (photoInput) {
+        photoInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => { photoData = reader.result; };
+            reader.readAsDataURL(file);
+        });
+    }
     form.addEventListener('submit', e => {
         e.preventDefault();
-        saveUserInfo({ age: form.age.value, gender: form.gender.value });
+        saveUserInfo({ age: form.age.value, gender: form.gender.value, photo: photoData });
         alert('Profil sauvegardé');
     });
 }
@@ -51,15 +63,36 @@ function initMap() {
 
     const pins = getPins();
     const userIndex = parseInt(localStorage.getItem('userPinIndex'), 10);
+    const markers = [];
+    function popupHtml(p, idx) {
+        const img = p.photo ? `<img src="${p.photo}" class="popup-photo">` : '';
+        const likes = p.likes || 0;
+        const likeBtn = `<button class="like-btn" data-index="${idx}">Like (${likes})</button>`;
+        return `${img}<p>${p.age} ans – ${p.gender}</p>${likeBtn}`;
+    }
     pins.forEach((p, idx) => {
-        const marker = L.marker([p.lat, p.lng]).addTo(map)
-            .bindPopup(p.age + ' ans – ' + p.gender);
+        const marker = L.marker([p.lat, p.lng], {riseOnHover: true}).addTo(map)
+            .bindPopup(popupHtml(p, idx));
+        markers.push(marker);
         if (idx === userIndex) {
             userMarker = marker;
             marker.on('click', () => {
                 if (confirm('Supprimer ce pin ?')) {
                     removeUserPin();
                 }
+            });
+        }
+    });
+
+    map.on('popupopen', e => {
+        const btn = e.popup.getElement().querySelector('.like-btn');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.index, 10);
+                const list = getPins();
+                list[idx].likes = (list[idx].likes || 0) + 1;
+                savePins(list);
+                btn.textContent = `Like (${list[idx].likes})`;
             });
         }
     });
@@ -74,10 +107,13 @@ function initMap() {
             alert('Veuillez remplir votre âge et genre dans le profil.');
             return;
         }
-        const marker = L.marker(e.latlng).addTo(map)
-            .bindPopup(info.age + ' ans – ' + info.gender)
+        const pinData = { age: info.age, gender: info.gender, photo: info.photo, likes: 0 };
+        const marker = L.marker(e.latlng, {riseOnHover:true}).addTo(map)
+            .bindPopup(popupHtml(pinData, pins.length))
             .openPopup();
-        pins.push({ lat: e.latlng.lat, lng: e.latlng.lng, age: info.age, gender: info.gender });
+        marker.once('add', () => { marker._icon.classList.add('marker-new'); });
+        pins.push({ lat: e.latlng.lat, lng: e.latlng.lng, ...pinData });
+        markers.push(marker);
         savePins(pins);
         localStorage.setItem('userPinIndex', pins.length - 1);
         userMarker = marker;
@@ -87,6 +123,16 @@ function initMap() {
             }
         });
     });
+
+    function handleZoom() {
+        if (map.getZoom() >= 15) {
+            markers.forEach(m => m.openPopup());
+        } else {
+            markers.forEach(m => m.closePopup());
+        }
+    }
+    map.on('zoomend', handleZoom);
+    handleZoom();
 }
 
 function removeUserPin() {
@@ -129,7 +175,18 @@ function displayRandomProfiles() {
     sample.forEach(p => {
         const div = document.createElement('div');
         div.className = 'profile-card';
-        div.textContent = `${p.age} ans – ${p.gender} (lat: ${p.lat.toFixed(2)}, lng: ${p.lng.toFixed(2)})`;
+        if (p.photo) {
+            const img = document.createElement('img');
+            img.src = p.photo;
+            img.className = 'popup-photo';
+            div.appendChild(img);
+        }
+        const info = document.createElement('p');
+        info.textContent = `${p.age} ans – ${p.gender}`;
+        div.appendChild(info);
+        const likes = document.createElement('span');
+        likes.textContent = `Likes: ${p.likes || 0}`;
+        div.appendChild(likes);
         container.appendChild(div);
     });
 }
