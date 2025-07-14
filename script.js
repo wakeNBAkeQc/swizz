@@ -142,7 +142,7 @@ function initMap() {
     });
 
     map.on('click', e => {
-        if (localStorage.getItem('userPinIndex') !== null) {
+        if (localStorage.getItem('userPinIndex') !== null || userMarker) {
             alert('Vous avez déjà ajouté un pin.');
             return;
         }
