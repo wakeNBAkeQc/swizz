@@ -13,6 +13,9 @@ function saveUserInfo(info) {
             pins[index].gender = info.gender;
             pins[index].photo = info.photo;
             savePins(pins);
+            if (userMarker) {
+                userMarker.setPopupContent(popupHtml(pins[index], parseInt(index, 10)));
+            }
         }
     }
 }
@@ -27,6 +30,13 @@ function savePins(pins) {
 
 let userMarker = null;
 
+function popupHtml(p, idx) {
+    const img = p.photo ? `<img src="${p.photo}" class="popup-photo">` : '';
+    const likes = p.likes || 0;
+    const likeBtn = `<button class="like-btn" data-index="${idx}">Like (${likes})</button>`;
+    return `${img}<p>${p.age} ans – ${p.gender}</p>${likeBtn}`;
+}
+
 function initProfileForm() {
     const form = document.getElementById('profile-form');
     if (!form) return;
@@ -35,12 +45,23 @@ function initProfileForm() {
     if (info.gender) form.gender.value = info.gender;
     let photoData = info.photo || null;
     const photoInput = document.getElementById('photo');
+    const photoPreview = document.getElementById('photo-preview');
+    if (photoPreview && photoData) {
+        photoPreview.src = photoData;
+        photoPreview.style.display = 'block';
+    }
     if (photoInput) {
         photoInput.addEventListener('change', e => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = () => { photoData = reader.result; };
+            reader.onload = () => {
+                photoData = reader.result;
+                if (photoPreview) {
+                    photoPreview.src = photoData;
+                    photoPreview.style.display = 'block';
+                }
+            };
             reader.readAsDataURL(file);
         });
     }
@@ -64,12 +85,6 @@ function initMap() {
     const pins = getPins();
     const userIndex = parseInt(localStorage.getItem('userPinIndex'), 10);
     const markers = [];
-    function popupHtml(p, idx) {
-        const img = p.photo ? `<img src="${p.photo}" class="popup-photo">` : '';
-        const likes = p.likes || 0;
-        const likeBtn = `<button class="like-btn" data-index="${idx}">Like (${likes})</button>`;
-        return `${img}<p>${p.age} ans – ${p.gender}</p>${likeBtn}`;
-    }
     pins.forEach((p, idx) => {
         const marker = L.marker([p.lat, p.lng], {riseOnHover: true}).addTo(map)
             .bindPopup(popupHtml(p, idx));
