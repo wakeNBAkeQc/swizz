@@ -10,6 +10,26 @@ function calculateAge(birthDate) {
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('age-form');
+  const policyLink = document.getElementById('policy-link');
+  const policyModal = document.getElementById('policy-modal');
+  const policyOverlay = document.getElementById('policy-overlay');
+  const policyClose = document.getElementById('policy-close');
+
+  if (policyLink && policyModal && policyOverlay) {
+    policyLink.addEventListener('click', e => {
+      e.preventDefault();
+      policyModal.style.display = 'block';
+      policyOverlay.style.display = 'block';
+    });
+  }
+
+  if (policyClose && policyModal && policyOverlay) {
+    policyClose.addEventListener('click', () => {
+      policyModal.style.display = 'none';
+      policyOverlay.style.display = 'none';
+    });
+  }
+
   if (!form) return;
   form.addEventListener('submit', e => {
     e.preventDefault();
