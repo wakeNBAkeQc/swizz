@@ -1,134 +1,223 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <title>Accueil</title>
-  <style>
-    .hero {
-      width: 100%;
-      max-height: 300px;
-      object-fit: cover;
-      border-radius: 10px;
-    }
-    .button {
-      display: inline-block;
-      background: #007bff;
-      color: white;
-      padding: 1em 2em;
-      margin-top: 1em;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-      transition: 0.3s ease;
-    }
-    .button:hover {
-      background: #0056b3;
-    }
-    .profile-card {
-      display: inline-block;
-      margin: 10px;
-      padding: 1em;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      width: 150px;
-      text-align: center;
-      background: #f9f9f9;
-    }
-    .popup-photo {
-      width: 100%;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 0.5em;
-    }
-    #mini-map {
-      height: 250px;
-      width: 100%;
-      margin-top: 1.5em;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-    }
-    #cta {
-      background: #ffe9d5;
-      padding: 2em;
-      text-align: center;
-      margin-top: 2em;
-      border-radius: 10px;
-    }
-  </style>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-</head>
-<body>
-<nav>
-  <img src="logo.svg" alt="Zwizz" class="logo">
-  <a href="accueil.html">Accueil</a>
-  <a href="map.html">Carte</a>
-  <a href="profil.html">Profil</a>
-  <a href="securite.html">Sécurité</a>
-  <a href="aide.html">Aide</a>
-  <a href="about.html">À propos</a>
-  <a href="#" id="logout-link">Déconnexion</a>
-</nav>
-
-<main>
-  <h1>Bienvenue sur Zwizz</h1>
-
-  <section id="intro">
-    <img src="https://images.unsplash.com/photo-1521120098171-556ded3b8fa4?auto=format&fit=crop&w=800&q=80" alt="Rencontres sur Zwizz" class="hero" />
-    <p>Zwizz est l'endroit idéal pour rencontrer de nouvelles personnes autour de vous. Créez votre profil, placez un pin sur la carte et partez à la découverte de gens qui veulent connecter!</p>
-    <a class="button" href="map.html">Voir la carte</a>
-  </section>
-
-  <section id="mini-map-section">
-    <h2>Activité récente</h2>
-    <div id="mini-map"></div>
-  </section>
-
-  <section id="profiles">
-    <h2>Profils aléatoires</h2>
-    <!-- Injecté par JS -->
-  </section>
-
-  <section id="cta">
-    <h2>Pas encore de profil?</h2>
-    <p>Clique ici pour te créer un profil rapidement. Age, genre, photo : c’est simple et confidentiel.</p>
-    <a class="button" href="profil.html">Créer mon profil</a>
-  </section>
-
-  <section id="temoignages">
-    <h2>Témoignages</h2>
-    <blockquote>"J'ai rencontré mon coloc grâce à Zwizz!" – Alex</blockquote>
-    <blockquote>"Simple à utiliser et sécuritaire, j'adore!" – Sarah</blockquote>
-  </section>
-</main>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="script.js"></script>
-<script>
-  function initMiniMap() {
-    const container = document.getElementById("mini-map");
-    if (!container) return;
-    const map = L.map(container, { zoomControl: false }).setView([45.5019, -73.5674], 12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap"
-    }).addTo(map);
-
-    const pins = JSON.parse(localStorage.getItem("pins") || "[]");
-    pins.slice(-5).forEach(p => {
-      const marker = L.marker([p.lat, p.lng]).addTo(map);
-      if (p.age && p.gender) {
-        marker.bindPopup(`${p.age} ans – ${p.gender}`);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <title>Accueil</title>
+    <style>
+      .hero {
+        width: 100%;
+        max-height: 300px;
+        object-fit: cover;
+        border-radius: 10px;
       }
-    });
-  }
+      .button {
+        display: inline-block;
+        background: #007bff;
+        color: white;
+        padding: 1em 2em;
+        margin-top: 1em;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: 0.3s ease;
+      }
+      .button:hover {
+        background: #0056b3;
+      }
+      .profile-card {
+        display: inline-block;
+        margin: 10px;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        width: 150px;
+        text-align: center;
+        background: #f9f9f9;
+      }
+      .popup-photo {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 0.5em;
+      }
+      #mini-map {
+        height: 250px;
+        width: 100%;
+        margin-top: 1.5em;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+      }
+      #cta {
+        background: #ffe9d5;
+        padding: 2em;
+        text-align: center;
+        margin-top: 2em;
+        border-radius: 10px;
+      }
+      .feature-box {
+        background: #f0f0f0;
+        padding: 1em;
+        border-radius: 10px;
+        width: 200px;
+        text-align: center;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  </head>
+  <body>
+    <nav>
+      <img
+        src="logozwizz.png"
+        alt="Zwizz"
+        class="logo"
+        style="height: 50px; margin-right: 10px"
+      />
+      <a href="accueil.html">Accueil</a>
+      <a href="map.html">Carte</a>
+      <a href="profil.html">Profil</a>
+      <a href="securite.html">Sécurité</a>
+      <a href="aide.html">Aide</a>
+      <a href="about.html">À propos</a>
+      <a href="#" id="logout-link">Déconnexion</a>
+    </nav>
 
-  document.addEventListener("DOMContentLoaded", () => {
-    displayRandomProfiles();
-    initMiniMap();
-  });
-</script>
-</body>
+    <main>
+      <h1>Bienvenue sur Zwizz</h1>
+
+      <section id="intro">
+        <img
+          src="https://images.unsplash.com/photo-1521120098171-556ded3b8fa4?auto=format&fit=crop&w=800&q=80"
+          alt="Rencontres sur Zwizz"
+          class="hero"
+        />
+        <p>
+          Zwizz est l'endroit idéal pour rencontrer de nouvelles personnes
+          autour de vous. Créez votre profil, placez un pin sur la carte et
+          partez à la découverte de gens qui veulent connecter!
+        </p>
+        <a class="button" href="map.html">Voir la carte</a>
+      </section>
+
+      <section style="margin-top: 2em; text-align: center">
+        <h2>🎥 Zwizz en action</h2>
+        <iframe
+          width="100%"
+          height="315"
+          style="max-width: 700px; border-radius: 12px; margin-top: 1em"
+          src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+          title="Présentation de Zwizz"
+          frameborder="0"
+          allowfullscreen
+        ></iframe>
+      </section>
+
+      <section style="margin-top: 3em">
+        <h2>🛠️ Fonctionnalités clés</h2>
+        <div
+          style="
+            display: flex;
+            gap: 1em;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 1em;
+          "
+        >
+          <div class="feature-box">📍 Pins géolocalisés en temps réel</div>
+          <div class="feature-box">🧑‍🎤 Profils personnalisables avec photo</div>
+          <div class="feature-box">💬 Match & interaction instantanée</div>
+          <div class="feature-box">
+            🔒 Sécurité & confidentialité renforcées
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top: 3em">
+        <h2>❤️ Pourquoi choisir Zwizz ?</h2>
+        <ul style="line-height: 1.8; max-width: 700px; margin: auto">
+          <li>100% gratuit et anonyme</li>
+          <li>Interface simple et rapide</li>
+          <li>Basé sur votre position réelle</li>
+          <li>Aucune inscription obligatoire pour explorer</li>
+        </ul>
+      </section>
+
+      <section id="mini-map-section">
+        <h2>Activité récente</h2>
+        <div id="mini-map"></div>
+      </section>
+
+      <section id="profiles">
+        <h2>Profils aléatoires</h2>
+        <!-- Injecté par JS -->
+      </section>
+
+      <section
+        style="
+          background: linear-gradient(90deg, #ffe9d5, #ffd8cb);
+          padding: 2em;
+          margin-top: 3em;
+          border-radius: 12px;
+          text-align: center;
+        "
+      >
+        <h2>🚀 Prêt à connecter avec d'autres ?</h2>
+        <p>Crée ton profil en quelques secondes et commence à explorer.</p>
+        <a class="button" href="profil.html">Créer mon profil maintenant</a>
+      </section>
+
+      <section id="cta">
+        <h2>Pas encore de profil?</h2>
+        <p>
+          Clique ici pour te créer un profil rapidement. Age, genre, photo :
+          c’est simple et confidentiel.
+        </p>
+        <a class="button" href="profil.html">Créer mon profil</a>
+      </section>
+
+      <section id="temoignages">
+        <h2>Témoignages</h2>
+        <blockquote>
+          "J'ai rencontré mon coloc grâce à Zwizz!" – Alex
+        </blockquote>
+        <blockquote>
+          "Simple à utiliser et sécuritaire, j'adore!" – Sarah
+        </blockquote>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+    <script>
+      function initMiniMap() {
+        const container = document.getElementById("mini-map");
+        if (!container) return;
+        const map = L.map(container, { zoomControl: false }).setView(
+          [45.5019, -73.5674],
+          12
+        );
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap",
+        }).addTo(map);
+
+        const pins = JSON.parse(localStorage.getItem("pins") || "[]");
+        pins.slice(-5).forEach((p) => {
+          const marker = L.marker([p.lat, p.lng]).addTo(map);
+          if (p.age && p.gender) {
+            marker.bindPopup(`${p.age} ans – ${p.gender}`);
+          }
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        displayRandomProfiles();
+        initMiniMap();
+      });
+    </script>
+  </body>
 </html>
