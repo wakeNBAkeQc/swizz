@@ -15,6 +15,7 @@
     <a href="accueil.html">Accueil</a>
     <a href="map.html">Carte</a>
     <a href="profil.html">Profil</a>
+    <a href="favoris.html">Favoris</a>
     <a href="securite.html">Sécurité</a>
     <a href="aide.html">Aide</a>
     <a href="about.html">À propos</a>
@@ -22,8 +23,25 @@
 </nav>
 <main>
     <h1>Carte interactive</h1>
+    <div id="filter-menu">
+        <label>Âge min <input type="number" id="filter-age-min"></label>
+        <label>Âge max <input type="number" id="filter-age-max"></label>
+        <label>Genre
+            <select id="filter-gender">
+                <option value="">Tous</option>
+                <option value="homme">Homme</option>
+                <option value="femme">Femme</option>
+                <option value="autre">Autre</option>
+            </select>
+        </label>
+        <label><input type="checkbox" id="filter-photo"> Profils avec photo</label>
+    </div>
     <div id="map" style="height: 80vh;"></div>
     <button id="remove-pin" class="button" style="margin-top:1em;">Supprimer mon pin</button>
+    <div id="message-modal" class="message-box" style="display:none;">
+        <textarea></textarea>
+        <button>Envoyer</button>
+    </div>
 </main>
 <!-- Load Leaflet with CDN fallback -->
 <script src="node_modules/leaflet/dist/leaflet.js" onerror="this.onerror=null;this.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'"></script>
