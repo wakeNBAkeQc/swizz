@@ -91,11 +91,7 @@ function initMap() {
         markers.push(marker);
         if (idx === userIndex) {
             userMarker = marker;
-            marker.on('click', () => {
-                if (confirm('Supprimer ce pin ?')) {
-                    removeUserPin();
-                }
-            });
+            marker.on('click', removeUserPin);
         }
     });
 
@@ -132,11 +128,7 @@ function initMap() {
         savePins(pins);
         localStorage.setItem('userPinIndex', pins.length - 1);
         userMarker = marker;
-        userMarker.on('click', () => {
-            if (confirm('Supprimer ce pin ?')) {
-                removeUserPin();
-            }
-        });
+        userMarker.on('click', removeUserPin);
     });
 
     function handleZoom() {
@@ -151,8 +143,8 @@ function initMap() {
 }
 
 function removeUserPin() {
-    const index = localStorage.getItem('userPinIndex');
-    if (index === null) {
+    const index = parseInt(localStorage.getItem('userPinIndex'), 10);
+    if (Number.isNaN(index)) {
         alert("Vous n'avez pas encore placé de pin.");
         return;
     }
