@@ -159,6 +159,30 @@ select {
     margin-bottom: 0.5em;
 }
 
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 1em;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+    max-width: 90%;
+    overflow-y: auto;
+}
+
 #filter-menu {
     background: #fff;
     padding: 1em;
