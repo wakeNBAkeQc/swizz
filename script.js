@@ -33,6 +33,26 @@ function savePins(pins) {
 }
 
 let userMarker = null;
+let markers = [];
+let mapPins = [];
+let userIndex = null;
+let mapInstance = null;
+
+function loadFavorites() {
+    return JSON.parse(localStorage.getItem('favPins') || '[]');
+}
+
+function saveFavorites(favs) {
+    localStorage.setItem('favPins', JSON.stringify(favs));
+}
+
+function loadMessages() {
+    return JSON.parse(localStorage.getItem('messages') || '{}');
+}
+
+function saveMessages(msgs) {
+    localStorage.setItem('messages', JSON.stringify(msgs));
+}
 
 function logoutUser() {
     localStorage.removeItem('ageVerified');
@@ -64,7 +84,23 @@ function popupHtml(p, idx) {
     const img = p.photo ? `<img src="${p.photo}" class="popup-photo">` : '';
     const likes = p.likes || 0;
     const likeBtn = `<button class="like-btn" data-index="${idx}">Like (${likes})</button>`;
-    return `${img}<p>${p.age} ans – ${p.gender}</p>${likeBtn}`;
+    const favBtn = idx !== userIndex ? `<button class="fav-btn" data-index="${idx}">❤️ Ajouter aux favoris</button>` : '';
+    const msgBtn = idx !== userIndex ? `<button class="msg-btn" data-index="${idx}">Envoyer un message</button>` : '';
+
+    const last = p.lastSeen || 0;
+    const diffMin = Math.floor((Date.now() - last) / 60000);
+    const online = diffMin < 10;
+    const status = `<span class="status-indicator" title="Dernière activité">${online ? '🟢 En ligne' : `🕒 Vu il y a ${diffMin} min`}</span>`;
+
+    let messagesHtml = '';
+    if (idx === userIndex) {
+        const msgs = loadMessages()[idx] || [];
+        if (msgs.length) {
+            messagesHtml = '<div class="messages">' + msgs.map(m => `<p>${m}</p>`).join('') + '</div>';
+        }
+    }
+
+    return `${img}<p>${p.age} ans – ${p.gender}</p>${status}${likeBtn}${favBtn}${msgBtn}${messagesHtml}`;
 }
 
 function initProfileForm() {
@@ -119,13 +155,15 @@ function initMap() {
 
     // Montréal coordinates by default
     const map = L.map(mapEl).setView([45.5019, -73.5674], 13);
+    mapInstance = map;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     const pins = getPins();
-    const userIndex = parseInt(localStorage.getItem('userPinIndex'), 10);
-    const markers = [];
+    mapPins = pins;
+    userIndex = parseInt(localStorage.getItem('userPinIndex'), 10);
+    markers = [];
     pins.forEach((p, idx) => {
         const marker = L.marker([p.lat, p.lng], {riseOnHover: true}).addTo(map)
             .bindPopup(popupHtml(p, idx));
@@ -136,15 +174,40 @@ function initMap() {
         }
     });
 
+    if (!Number.isNaN(userIndex) && pins[userIndex]) {
+        pins[userIndex].lastSeen = Date.now();
+        savePins(pins);
+    }
+
     map.on('popupopen', e => {
-        const btn = e.popup.getElement().querySelector('.like-btn');
-        if (btn) {
-            btn.addEventListener('click', () => {
-                const idx = parseInt(btn.dataset.index, 10);
+        const el = e.popup.getElement();
+        const likeBtn = el.querySelector('.like-btn');
+        if (likeBtn) {
+            likeBtn.addEventListener('click', () => {
+                const idx = parseInt(likeBtn.dataset.index, 10);
                 const list = getPins();
                 list[idx].likes = (list[idx].likes || 0) + 1;
                 savePins(list);
-                btn.textContent = `Like (${list[idx].likes})`;
+                likeBtn.textContent = `Like (${list[idx].likes})`;
+            });
+        }
+        const favBtn = el.querySelector('.fav-btn');
+        if (favBtn) {
+            favBtn.addEventListener('click', () => {
+                const idx = parseInt(favBtn.dataset.index, 10);
+                const favs = loadFavorites();
+                if (!favs.includes(idx)) {
+                    favs.push(idx);
+                    saveFavorites(favs);
+                    favBtn.textContent = '❤️ Ajouté';
+                }
+            });
+        }
+        const msgBtn = el.querySelector('.msg-btn');
+        if (msgBtn) {
+            msgBtn.addEventListener('click', () => {
+                const idx = parseInt(msgBtn.dataset.index, 10);
+                openMessageModal(idx);
             });
         }
     });
@@ -245,11 +308,86 @@ function displayRandomProfiles() {
     });
 }
 
+function openMessageModal(idx) {
+    const modal = document.getElementById('message-modal');
+    if (!modal) return;
+    modal.style.display = 'block';
+    const textarea = modal.querySelector('textarea');
+    const sendBtn = modal.querySelector('button');
+    textarea.value = '';
+    sendBtn.onclick = () => {
+        const text = textarea.value.trim();
+        if (text) {
+            const msgs = loadMessages();
+            if (!msgs[idx]) msgs[idx] = [];
+            msgs[idx].push(text);
+            saveMessages(msgs);
+        }
+        modal.style.display = 'none';
+    };
+}
+
+function displayFavorites() {
+    const container = document.getElementById('fav-list');
+    if (!container) return;
+    container.innerHTML = '';
+    const favs = loadFavorites();
+    const pins = getPins();
+    favs.forEach(idx => {
+        const p = pins[idx];
+        if (!p) return;
+        const div = document.createElement('div');
+        div.className = 'profile-card';
+        if (p.photo) {
+            const img = document.createElement('img');
+            img.src = p.photo;
+            img.className = 'popup-photo';
+            div.appendChild(img);
+        }
+        const info = document.createElement('p');
+        info.textContent = `${p.age} ans – ${p.gender}`;
+        div.appendChild(info);
+        const likes = document.createElement('span');
+        likes.textContent = `Likes: ${p.likes || 0}`;
+        div.appendChild(likes);
+        const remove = document.createElement('button');
+        remove.textContent = 'Retirer';
+        remove.className = 'button';
+        remove.addEventListener('click', () => {
+            const list = loadFavorites().filter(i => i !== idx);
+            saveFavorites(list);
+            displayFavorites();
+        });
+        div.appendChild(remove);
+        container.appendChild(div);
+    });
+}
+
+function applyFilters() {
+    const min = parseInt(document.getElementById('filter-age-min').value, 10) || 0;
+    const max = parseInt(document.getElementById('filter-age-max').value, 10) || 150;
+    const gender = document.getElementById('filter-gender').value;
+    const photoOnly = document.getElementById('filter-photo').checked;
+    markers.forEach((m, idx) => {
+        const p = mapPins[idx];
+        let show = true;
+        if (p.age < min || p.age > max) show = false;
+        if (gender && p.gender !== gender) show = false;
+        if (photoOnly && !p.photo) show = false;
+        if (show) {
+            m.addTo(mapInstance);
+        } else {
+            m.remove();
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     cleanupPins();
     initProfileForm();
     initMap();
     displayRandomProfiles();
+    displayFavorites();
     const btn = document.getElementById('remove-pin');
     if (btn) {
         btn.addEventListener('click', removeUserPin);
@@ -259,6 +397,18 @@ document.addEventListener('DOMContentLoaded', () => {
         logoutLink.addEventListener('click', e => {
             e.preventDefault();
             logoutUser();
+        });
+    }
+
+    const filters = document.getElementById('filter-menu');
+    if (filters) {
+        filters.addEventListener('input', applyFilters);
+    }
+
+    const modal = document.getElementById('message-modal');
+    if (modal) {
+        modal.addEventListener('click', e => {
+            if (e.target === modal) modal.style.display = 'none';
         });
     }
 });
