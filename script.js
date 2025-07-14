@@ -30,6 +30,23 @@ function savePins(pins) {
 
 let userMarker = null;
 
+function cleanupPins() {
+    let pins = getPins();
+    let index = parseInt(localStorage.getItem('userPinIndex'), 10);
+    if (pins.length > 1) {
+        if (Number.isNaN(index) || index >= pins.length) {
+            index = 0;
+        }
+        pins = [pins[index]];
+        savePins(pins);
+        localStorage.setItem('userPinIndex', '0');
+    } else if (pins.length === 1 && Number.isNaN(index)) {
+        localStorage.setItem('userPinIndex', '0');
+    } else if (pins.length === 0) {
+        localStorage.removeItem('userPinIndex');
+    }
+}
+
 function popupHtml(p, idx) {
     const img = p.photo ? `<img src="${p.photo}" class="popup-photo">` : '';
     const likes = p.likes || 0;
@@ -160,11 +177,7 @@ function removeUserPin(e) {
     if (!confirm('Supprimer définitivement votre pin ?')) {
         return;
     }
-    const pins = getPins();
-    if (pins[index]) {
-        pins.splice(index, 1);
-        savePins(pins);
-    }
+    savePins([]);
     localStorage.removeItem('userPinIndex');
     if (userMarker) {
         userMarker.remove();
@@ -208,6 +221,7 @@ function displayRandomProfiles() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    cleanupPins();
     initProfileForm();
     initMap();
     displayRandomProfiles();
