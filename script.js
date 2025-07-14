@@ -54,6 +54,16 @@ function saveMessages(msgs) {
     localStorage.setItem('messages', JSON.stringify(msgs));
 }
 
+function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, c => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[c]));
+}
+
 function logoutUser() {
     localStorage.removeItem('ageVerified');
     localStorage.removeItem('birthDate');
@@ -96,11 +106,13 @@ function popupHtml(p, idx) {
     if (idx === userIndex) {
         const msgs = loadMessages()[idx] || [];
         if (msgs.length) {
-            messagesHtml = '<div class="messages">' + msgs.map(m => `<p>${m}</p>`).join('') + '</div>';
+            messagesHtml = '<div class="messages">' + msgs.map(m => `<p>${escapeHtml(m)}</p>`).join('') + '</div>';
         }
     }
 
-    return `${img}<p>${p.age} ans – ${p.gender}</p>${status}${likeBtn}${favBtn}${msgBtn}${messagesHtml}`;
+    const age = escapeHtml(String(p.age));
+    const gender = escapeHtml(p.gender);
+    return `${img}<p>${age} ans – ${gender}</p>${status}${likeBtn}${favBtn}${msgBtn}${messagesHtml}`;
 }
 
 function initProfileForm() {
@@ -320,7 +332,7 @@ function openMessageModal(idx) {
         if (text) {
             const msgs = loadMessages();
             if (!msgs[idx]) msgs[idx] = [];
-            msgs[idx].push(text);
+            msgs[idx].push(escapeHtml(text));
             saveMessages(msgs);
         }
         modal.style.display = 'none';
