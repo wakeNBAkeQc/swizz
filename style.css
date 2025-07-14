@@ -2,7 +2,7 @@ body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    background: linear-gradient(to bottom, #ffccd5, #f3e6ff);
+    background: linear-gradient(to bottom, #fff, #ffe6f2);
     color: #333;
 }
 
@@ -10,8 +10,40 @@ nav {
     background: #800080;
     padding: 0.5em 1em;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.popup-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto 0.5em;
+}
+
+.like-btn {
+    padding: 0.3em 0.6em;
+    border: none;
+    border-radius: 4px;
+    background: #ff4081;
+    color: #fff;
+    cursor: pointer;
+}
+
+.like-btn:hover {
+    background: #c60055;
+}
+
+.marker-new {
+    animation: pop 0.5s ease;
+}
+
+@keyframes pop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 
 nav .logo {
@@ -97,6 +129,9 @@ select {
 @media (max-width: 600px) {
     body {
         font-size: 14px;
+    }
+    nav a {
+        margin: 0.2em;
     }
     form {
         width: 90%;
