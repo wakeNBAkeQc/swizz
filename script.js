@@ -854,6 +854,36 @@ function applyFilters() {
     });
 }
 
+function initDrawer() {
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    const openBtn = document.getElementById('menu-btn');
+    const closeBtn = document.getElementById('drawer-close');
+    const drawerLogin = document.getElementById('drawer-login');
+    const drawerSignup = document.getElementById('drawer-signup');
+    const drawerLogout = document.getElementById('drawer-logout');
+    if (!(drawer && overlay && openBtn && closeBtn)) return;
+    const closeDrawer = () => {
+        drawer.classList.remove('open');
+        overlay.classList.remove('open');
+    };
+    openBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        drawer.classList.add('open');
+        overlay.classList.add('open');
+    });
+    closeBtn.addEventListener('click', closeDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', closeDrawer));
+    if (drawerLogin) drawerLogin.addEventListener('click', closeDrawer);
+    if (drawerSignup) drawerSignup.addEventListener('click', closeDrawer);
+    if (drawerLogout) drawerLogout.addEventListener('click', e => {
+        e.preventDefault();
+        closeDrawer();
+        logoutUser();
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
     await syncUserInfoFromFirestore();
@@ -910,33 +940,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         displayMessages();
     }
 
-    const drawer = document.getElementById('drawer');
-    const overlay = document.getElementById('drawer-overlay');
-    const openBtn = document.getElementById('menu-btn');
-    const closeBtn = document.getElementById('drawer-close');
-    const drawerLogin = document.getElementById('drawer-login');
-    const drawerSignup = document.getElementById('drawer-signup');
-    const drawerLogout = document.getElementById('drawer-logout');
-    if (drawer && overlay && openBtn && closeBtn) {
-        const closeDrawer = () => {
-            drawer.classList.remove('open');
-            overlay.classList.remove('open');
-        };
-        openBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            drawer.classList.add('open');
-            overlay.classList.add('open');
-        });
-        closeBtn.addEventListener('click', closeDrawer);
-        overlay.addEventListener('click', closeDrawer);
-        drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', closeDrawer));
-        if (drawerLogin) drawerLogin.addEventListener('click', closeDrawer);
-        if (drawerSignup) drawerSignup.addEventListener('click', closeDrawer);
-        if (drawerLogout) drawerLogout.addEventListener('click', e => {
-            e.preventDefault();
-            closeDrawer();
-            logoutUser();
-        });
-    }
+    initDrawer();
 
 });

@@ -61,7 +61,7 @@
   <script>
     document.getElementById('signup-form').addEventListener('submit', register);
     document.getElementById('google-signup').addEventListener('click', loginGoogle);
-    fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(false);});
+    fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(false);initDrawer();});
   </script>
 </body>
 </html>
