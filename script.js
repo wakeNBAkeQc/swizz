@@ -95,18 +95,13 @@ function logoutUser() {
 }
 
 function cleanupPins() {
-    let pins = getPins();
-    let index = parseInt(localStorage.getItem('userPinIndex'), 10);
-    if (pins.length > 1) {
-        if (Number.isNaN(index) || index >= pins.length) {
-            index = 0;
-        }
-        pins = [pins[index]];
-        savePins(pins);
-        localStorage.setItem('userPinIndex', '0');
-    } else if (pins.length === 1 && Number.isNaN(index)) {
-        localStorage.setItem('userPinIndex', '0');
-    } else if (pins.length === 0) {
+    const pins = getPins();
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid) return;
+    const idx = pins.findIndex(p => p.id === uid);
+    if (idx >= 0) {
+        localStorage.setItem('userPinIndex', String(idx));
+    } else {
         localStorage.removeItem('userPinIndex');
     }
 }
@@ -202,7 +197,7 @@ function initProfileForm() {
 
 async function initMap() {
     await syncPinsFromFirestore();
-    // Ensure only one pin exists before initializing the map
+    // Determine the current user's pin index
     cleanupPins();
 
     // Listen for storage changes from other tabs to keep state in sync
@@ -236,6 +231,11 @@ async function initMap() {
             marker.on('click', removeUserPin);
         }
     });
+
+    const btn = document.getElementById('remove-pin');
+    if (btn) {
+        btn.style.display = Number.isNaN(userIndex) ? 'none' : 'block';
+    }
 
     if (!Number.isNaN(userIndex) && pins[userIndex]) {
         pins[userIndex].lastSeen = Date.now();
@@ -281,7 +281,9 @@ async function initMap() {
 
     map.on('click', e => {
         cleanupPins();
-        if (localStorage.getItem('userPinIndex') !== null || userMarker) {
+        const uid = firebase.auth().currentUser?.uid;
+        const existing = mapPins.findIndex(p => p.id === uid);
+        if (existing >= 0) {
             alert('Vous avez déjà ajouté un pin.');
             return;
         }
@@ -290,21 +292,26 @@ async function initMap() {
             alert('Veuillez remplir votre nom, âge et genre dans le profil.');
             return;
         }
-        const pinData = { name: info.name, age: info.age, gender: info.gender, photo: info.photo, likes: 0 };
+        const pinData = { id: uid, name: info.name, age: info.age, gender: info.gender, photo: info.photo, likes: 0 };
         const marker = L.marker(e.latlng, {riseOnHover:true}).addTo(map)
             .bindPopup(popupHtml(pinData, pins.length))
             .openPopup();
         marker.once('add', () => { marker._icon.classList.add('marker-new'); });
-        pins.push({ lat: e.latlng.lat, lng: e.latlng.lng, ...pinData });
+        const fullPin = { lat: e.latlng.lat, lng: e.latlng.lng, ...pinData };
+        pins.push(fullPin);
+        mapPins = pins;
         markers.push(marker);
         savePins(pins);
-        localStorage.setItem('userPinIndex', pins.length - 1);
-        const uid = firebase.auth().currentUser?.uid;
+        if (uid) {
+            localStorage.setItem('userPinIndex', pins.length - 1);
+        }
         if (uid && window.db) {
-            db.collection('pins').doc(uid).set({ lat: e.latlng.lat, lng: e.latlng.lng, ...pinData });
+            db.collection('pins').doc(uid).set(fullPin);
         }
         userMarker = marker;
         userMarker.on('click', removeUserPin);
+        const btn = document.getElementById('remove-pin');
+        if (btn) btn.style.display = 'block';
     });
 
     function handleZoom() {
@@ -328,17 +335,19 @@ function removeUserPin(e) {
             if (e.preventDefault) e.preventDefault();
         }
     }
-    const index = parseInt(localStorage.getItem('userPinIndex'), 10);
-    if (Number.isNaN(index)) {
+    const uid = firebase.auth().currentUser?.uid;
+    const pins = getPins();
+    const index = pins.findIndex(p => p.id === uid);
+    if (index === -1) {
         alert("Vous n'avez pas encore placé de pin.");
         return;
     }
     if (!confirm('Supprimer définitivement votre pin ?')) {
         return;
     }
-    savePins([]);
+    pins.splice(index, 1);
+    savePins(pins);
     localStorage.removeItem('userPinIndex');
-    const uid = firebase.auth().currentUser?.uid;
     if (uid && window.db) {
         db.collection('pins').doc(uid).delete().catch(() => {});
     }
@@ -466,8 +475,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
     cleanupPins();
     syncPinsFromFirestore().then(() => {
+        cleanupPins();
         displayRandomProfiles();
         displayFavorites();
+        const btnState = localStorage.getItem('userPinIndex') !== null ? 'block' : 'none';
+        const btn = document.getElementById('remove-pin');
+        if (btn) btn.style.display = btnState;
     });
     initProfileForm();
     initAuthGuard(document.body.dataset.auth === 'required');
