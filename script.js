@@ -262,6 +262,37 @@ function popupHtml(p, idx) {
     return `${img}<p><strong>${name}</strong><br>${age} ans – ${gender}</p>${status}${likeBtn}${favBtn}${msgBtn}${removeBtn}${messagesHtml}`;
 }
 
+async function resizeImage(file, maxDim = 512) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('read error'));
+        reader.onload = () => {
+            const img = new Image();
+            img.onerror = () => reject(new Error('img load error'));
+            img.onload = () => {
+                let { width, height } = img;
+                if (width > height) {
+                    if (width > maxDim) {
+                        height = Math.round(height * maxDim / width);
+                        width = maxDim;
+                    }
+                } else if (height > maxDim) {
+                    width = Math.round(width * maxDim / height);
+                    height = maxDim;
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 async function initProfileForm() {
     const form = document.getElementById('profile-form');
     if (!form) return;
@@ -286,22 +317,18 @@ async function initProfileForm() {
             photoInput.addEventListener('change', async e => {
                 const file = e.target.files[0];
                 if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async () => {
-                    profilePhotoData = reader.result;
-                    if (photoPreview) {
-                        photoPreview.src = profilePhotoData;
-                        photoPreview.style.display = 'block';
-                    }
-                    // Save the new photo immediately so it persists after a refresh
-                    await saveUserInfo({
-                        name: form.name.value,
-                        age: form.age.value,
-                        gender: form.gender.value,
-                        photo: profilePhotoData
-                    });
-                };
-                reader.readAsDataURL(file);
+                profilePhotoData = await resizeImage(file);
+                if (photoPreview) {
+                    photoPreview.src = profilePhotoData;
+                    photoPreview.style.display = 'block';
+                }
+                // Save the new photo immediately so it persists after a refresh
+                await saveUserInfo({
+                    name: form.name.value,
+                    age: form.age.value,
+                    gender: form.gender.value,
+                    photo: profilePhotoData
+                });
             });
         }
         form.addEventListener('submit', async e => {
