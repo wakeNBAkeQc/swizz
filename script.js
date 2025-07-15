@@ -98,19 +98,46 @@ async function syncPinsFromFirestore() {
     if (!window.db) return null;
     try {
         const snap = await db.collection('pins').get();
-        const pins = snap.docs.map(pinFromDoc);
-        savePins(pins);
-        mapPins = pins;
+        const remotePins = snap.docs.map(pinFromDoc);
         const uid = firebase.auth().currentUser?.uid;
+        const localPins = getPins();
+
         if (uid) {
-            const idx = pins.findIndex(p => p.id === uid);
+            const remoteIdx = remotePins.findIndex(p => p.id === uid);
+            const localIdx = localPins.findIndex(p => p.id === uid);
+            if (localIdx >= 0 && remoteIdx === -1) {
+                const p = localPins[localIdx];
+                try {
+                    await db.collection('pins').doc(uid).set({
+                        uid,
+                        lat: p.lat,
+                        lng: p.lng,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        profilSnapshot: {
+                            nom: p.name,
+                            age: parseInt(p.age, 10) || null,
+                            genre: p.gender,
+                            photoURL: p.photo || null
+                        }
+                    });
+                    remotePins.push({ ...p, id: uid });
+                } catch (_) {}
+            } else if (localIdx === -1 && remoteIdx >= 0) {
+                localPins.push(remotePins[remoteIdx]);
+            }
+        }
+
+        savePins(remotePins);
+        mapPins = remotePins;
+        if (uid) {
+            const idx = remotePins.findIndex(p => p.id === uid);
             if (idx >= 0) {
                 localStorage.setItem('userPinIndex', String(idx));
             } else {
                 localStorage.removeItem('userPinIndex');
             }
         }
-        return pins;
+        return remotePins;
     } catch (err) {
         console.error('syncPinsFromFirestore error:', err);
         return null;
