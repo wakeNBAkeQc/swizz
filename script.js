@@ -196,8 +196,9 @@ function popupHtml(p, idx) {
     const img = p.photo ? `<img src="${p.photo}" class="popup-photo">` : '';
     const likes = p.likes || 0;
     const likeBtn = `<button class="like-btn" data-index="${idx}">Like (${likes})</button>`;
-  const favBtn = idx !== userIndex ? `<button class="fav-btn" data-index="${idx}" data-id="${p.id}">❤️ Ajouter aux favoris</button>` : '';
-  const msgBtn = idx !== userIndex ? `<button class="msg-btn" data-index="${idx}" data-id="${p.id}">Envoyer un message</button>` : '';
+    const favBtn = idx !== userIndex ? `<button class="fav-btn" data-index="${idx}" data-id="${p.id}">❤️ Ajouter aux favoris</button>` : '';
+    const msgBtn = idx !== userIndex ? `<button class="msg-btn" data-index="${idx}" data-id="${p.id}">Envoyer un message</button>` : '';
+    const removeBtn = idx === userIndex ? `<button class="button remove-pin-btn">Supprimer ce pin</button>` : '';
 
     const label = formatLastSeen(p.lastSeen);
     const online = label === 'En ligne maintenant';
@@ -214,7 +215,7 @@ function popupHtml(p, idx) {
     const name = escapeHtml(p.name || '');
     const age = escapeHtml(String(p.age));
     const gender = escapeHtml(p.gender);
-    return `${img}<p><strong>${name}</strong><br>${age} ans – ${gender}</p>${status}${likeBtn}${favBtn}${msgBtn}${messagesHtml}`;
+    return `${img}<p><strong>${name}</strong><br>${age} ans – ${gender}</p>${status}${likeBtn}${favBtn}${msgBtn}${removeBtn}${messagesHtml}`;
 }
 
 function initProfileForm() {
@@ -339,6 +340,10 @@ async function initMap() {
                 const id = msgBtn.dataset.id;
                 openMessageModal(id);
             });
+        }
+        const removeBtn = el.querySelector('.remove-pin-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', removeUserPin);
         }
     });
 
