@@ -59,7 +59,6 @@ function register(e) {
       ]);
     })
     .then(() => {
-      localStorage.setItem('signupBirthDate', dobStr);
       window.location.href = 'map.html';
     })
     .catch(err => alert(err.message));

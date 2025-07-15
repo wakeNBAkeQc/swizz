@@ -259,12 +259,16 @@
           attribution: "&copy; OpenStreetMap",
         }).addTo(map);
 
-        const pins = JSON.parse(localStorage.getItem("pins") || "[]");
-        pins.slice(-5).forEach((p) => {
-          const marker = L.marker([p.lat, p.lng]).addTo(map);
-          if (p.age && p.gender) {
-            marker.bindPopup(`${p.age} ans – ${p.gender}`);
-          }
+        if (!window.db) return;
+        db.collection('pins').limit(5).get().then(snap => {
+          snap.docs.forEach(doc => {
+            const p = doc.data();
+            const snapData = p.profilSnapshot || {};
+            const marker = L.marker([p.lat, p.lng]).addTo(map);
+            if (snapData.age && snapData.genre) {
+              marker.bindPopup(`${snapData.age} ans – ${snapData.genre}`);
+            }
+          });
         });
       }
 
