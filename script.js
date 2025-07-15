@@ -712,6 +712,13 @@ async function sendInitialMessage(otherId, text) {
         text: sanitized,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
+    // Also store the message in each user's profile document so it appears
+    // in their message lists if that feature is used elsewhere in the site.
+    try {
+        await sendMessage(otherId, sanitized);
+    } catch (err) {
+        console.error('sendMessage (legacy storage) failed:', err);
+    }
     const modal = document.getElementById('message-modal');
     const overlay = document.getElementById('message-overlay');
     if (modal) modal.style.display = 'none';
