@@ -1037,7 +1037,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (convoEl) {
         const uid = getQueryParam('uid');
         if (uid) {
-            displayConversation(uid);
+            const start = () => displayConversation(uid);
+            if (firebase.auth().currentUser) start();
+            else firebase.auth().onAuthStateChanged(start);
         } else {
             const area = document.getElementById('conversation-area');
             const noConvo = document.getElementById('no-conversation');

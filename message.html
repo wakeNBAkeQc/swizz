@@ -32,6 +32,6 @@
 <script src="firebase-init.js"></script>
 <script src="auth.js"></script>
 <script src="script.js"></script>
-<script>fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(true);initDrawer(); const uid = new URLSearchParams(location.search).get("uid"); if(uid){displayConversation(uid);}});</script>
+<script>fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(true);initDrawer(); const uid=new URLSearchParams(location.search).get("uid"); if(uid){const f=()=>displayConversation(uid); if(firebase.auth().currentUser)f(); else firebase.auth().onAuthStateChanged(f);}});</script>
 </body>
 </html>
