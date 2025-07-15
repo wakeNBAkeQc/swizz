@@ -587,41 +587,42 @@ function applyFilters() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
-    await syncUserInfoFromFirestore();
-    const pinsFetched = await syncPinsFromFirestore();
-    if (pinsFetched) {
-        await cleanupPins();
-    }
-    displayRandomProfiles();
-    displayFavorites();
-    const btn = document.getElementById('remove-pin');
-    if (btn) btn.style.display = userIndex !== null ? 'block' : 'none';
-    initProfileForm();
     initAuthGuard(document.body.dataset.auth === 'required');
-    const removeBtn = document.getElementById('remove-pin');
-    if (removeBtn) {
-        removeBtn.addEventListener('click', removeUserPin);
-    }
-    const logoutLink = document.getElementById('logout-link');
-    if (logoutLink) {
-        logoutLink.addEventListener('click', e => {
-            e.preventDefault();
-            logoutUser();
-        });
-    }
+    firebase.auth().onAuthStateChanged(async () => {
+        await syncUserInfoFromFirestore();
+        const pinsFetched = await syncPinsFromFirestore();
+        if (pinsFetched) {
+            await cleanupPins();
+        }
+        displayRandomProfiles();
+        displayFavorites();
+        const btn = document.getElementById('remove-pin');
+        if (btn) btn.style.display = userIndex !== null ? 'block' : 'none';
+        initProfileForm();
+        const removeBtn = document.getElementById('remove-pin');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', removeUserPin);
+        }
+        const logoutLink = document.getElementById('logout-link');
+        if (logoutLink) {
+            logoutLink.addEventListener('click', e => {
+                e.preventDefault();
+                logoutUser();
+            });
+        }
 
-    const filters = document.getElementById('filter-menu');
-    if (filters) {
-        filters.addEventListener('input', applyFilters);
-    }
+        const filters = document.getElementById('filter-menu');
+        if (filters) {
+            filters.addEventListener('input', applyFilters);
+        }
 
-    const modal = document.getElementById('message-modal');
-    if (modal) {
-        modal.addEventListener('click', e => {
-            if (e.target === modal) modal.style.display = 'none';
-        });
-    }
-
+        const modal = document.getElementById('message-modal');
+        if (modal) {
+            modal.addEventListener('click', e => {
+                if (e.target === modal) modal.style.display = 'none';
+            });
+        }
+    });
 });
