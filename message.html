@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <title>Profil</title>
+    <title>Messages</title>
 </head>
 <body data-auth="required">
 <nav>
@@ -13,6 +13,7 @@
     <a href="accueil.html">Accueil</a>
     <a href="map.html">Carte</a>
     <a href="profil.html">Profil</a>
+    <a href="favoris.html">Favoris</a>
     <a href="securite.html">Sécurité</a>
     <a href="aide.html">Aide</a>
     <a href="about.html">À propos</a>
@@ -23,24 +24,8 @@
     <span id="user-info"></span>
 </nav>
 <main>
-    <h1>Mon Profil</h1>
-    <div class="profile-container">
-    <form id="profile-form">
-        <label for="name">Nom ou surnom :</label>
-        <input type="text" id="name" name="name" required>
-        <label for="age">Âge :</label>
-        <input type="number" id="age" name="age" required>
-        <label for="gender">Genre :</label>
-        <select id="gender" name="gender">
-            <option value="homme">Homme</option>
-            <option value="femme">Femme</option>
-        </select>
-        <label for="photo">Photo :</label>
-        <input type="file" id="photo" accept="image/*">
-        <img id="photo-preview" class="popup-photo" style="display:none;">
-        <button type="submit" class="button">Sauvegarder</button>
-    </form>
-    </div>
+    <h1>Messages</h1>
+    <div id="messages-container"></div>
 </main>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -49,6 +34,6 @@
 <script src="firebase-init.js"></script>
 <script src="auth.js"></script>
 <script src="script.js"></script>
-<script>initAuthGuard(true);</script>
+<script>initAuthGuard(true); displayMessages();</script>
 </body>
 </html>
