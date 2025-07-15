@@ -178,6 +178,36 @@ async function saveMessages(msgs) {
     }
 }
 
+async function sendMessage(targetUid, text) {
+    const user = firebase.auth().currentUser;
+    if (!user || !targetUid || !text || !window.db) return;
+    try {
+        const sanitized = escapeHtml(text.trim());
+        if (!sanitized) return;
+
+        const [targetDoc, selfDoc] = await Promise.all([
+            db.collection('profils').doc(targetUid).get(),
+            db.collection('profils').doc(user.uid).get()
+        ]);
+
+        const targetMsgs = targetDoc.exists && targetDoc.data().messages ? targetDoc.data().messages : {};
+        const selfMsgs = selfDoc.exists && selfDoc.data().messages ? selfDoc.data().messages : {};
+
+        if (!Array.isArray(targetMsgs[user.uid])) targetMsgs[user.uid] = [];
+        if (!Array.isArray(selfMsgs[targetUid])) selfMsgs[targetUid] = [];
+
+        targetMsgs[user.uid].push(sanitized);
+        selfMsgs[targetUid].push(sanitized);
+
+        await Promise.all([
+            db.collection('profils').doc(targetUid).set({ messages: targetMsgs }, { merge: true }),
+            db.collection('profils').doc(user.uid).set({ messages: selfMsgs }, { merge: true })
+        ]);
+    } catch (err) {
+        console.error('sendMessage error:', err);
+    }
+}
+
 function escapeHtml(str) {
     return str.replace(/[&<>"']/g, c => ({
         '&': '&amp;',
