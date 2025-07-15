@@ -366,7 +366,7 @@ async function initMap() {
     handleZoom();
 }
 
-function removeUserPin(e) {
+async function removeUserPin(e) {
     if (e) {
         if (e.originalEvent) {
             e.originalEvent.stopPropagation();
@@ -390,7 +390,11 @@ function removeUserPin(e) {
     savePins(pins);
     localStorage.removeItem('userPinIndex');
     if (uid && window.db) {
-        db.collection('pins').doc(uid).delete().catch(() => {});
+        try {
+            await db.collection('pins').doc(uid).delete();
+        } catch (_) {
+            // ignore errors
+        }
     }
     if (userMarker) {
         userMarker.remove();
