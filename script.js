@@ -88,6 +88,7 @@ let userIndex = null;
 let mapInstance = null;
 let profileFormInitialized = false;
 let profilePhotoData = null;
+let pendingMessageTarget = null;
 
 function pinFromDoc(doc) {
     const data = doc.data();
@@ -470,7 +471,7 @@ async function initMap() {
         if (msgBtn) {
             msgBtn.addEventListener('click', () => {
                 const id = msgBtn.dataset.id;
-                startConversation(id);
+                openMessageModal(id);
             });
         }
         const removeBtn = el.querySelector('.remove-pin-btn');
@@ -674,6 +675,62 @@ async function startConversation(otherId) {
         });
     }
     window.location.href = `message.html?uid=${otherId}`;
+}
+
+async function sendInitialMessage(otherId, text) {
+    const user = firebase.auth().currentUser;
+    if (!user || !otherId || !text || !window.db) return;
+    const sanitized = escapeHtml(text.trim());
+    if (!sanitized) return;
+    const convoId = [user.uid, otherId].sort().join('_');
+    const convoRef = db.collection('conversations').doc(convoId);
+    const convoDoc = await convoRef.get();
+    if (!convoDoc.exists) {
+        const [selfDoc, targetDoc] = await Promise.all([
+            db.collection('profils').doc(user.uid).get(),
+            db.collection('profils').doc(otherId).get()
+        ]);
+        const selfInfo = selfDoc.exists ? selfDoc.data() : {};
+        const targetInfo = targetDoc.exists ? targetDoc.data() : {};
+        await convoRef.set({
+            participants: [user.uid, otherId],
+            users: {
+                [user.uid]: { name: selfInfo.nom || user.displayName || '', photo: selfInfo.photo || selfInfo.photoURL || null },
+                [otherId]: { name: targetInfo.nom || '', photo: targetInfo.photo || targetInfo.photoURL || null }
+            },
+            lastMessage: sanitized,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } else {
+        await convoRef.set({
+            lastMessage: sanitized,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    }
+    await convoRef.collection('messages').add({
+        from: user.uid,
+        text: sanitized,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const modal = document.getElementById('message-modal');
+    const overlay = document.getElementById('message-overlay');
+    if (modal) modal.style.display = 'none';
+    if (overlay) overlay.style.display = 'none';
+    pendingMessageTarget = null;
+    window.location.href = `message.html?uid=${otherId}`;
+}
+
+function openMessageModal(otherId) {
+    pendingMessageTarget = otherId;
+    const modal = document.getElementById('message-modal');
+    const overlay = document.getElementById('message-overlay');
+    if (modal) modal.style.display = 'block';
+    if (overlay) overlay.style.display = 'block';
+    const input = document.getElementById('message-modal-text');
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
 }
 
 function getQueryParam(name) {
@@ -946,9 +1003,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const modal = document.getElementById('message-modal');
+    const overlay = document.getElementById('message-overlay');
+    const modalForm = document.getElementById('message-modal-form');
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            overlay.style.display = 'none';
+            if (modal) modal.style.display = 'none';
+            pendingMessageTarget = null;
+        });
+    }
     if (modal) {
         modal.addEventListener('click', e => {
-            if (e.target === modal) modal.style.display = 'none';
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                if (overlay) overlay.style.display = 'none';
+                pendingMessageTarget = null;
+            }
+        });
+    }
+    if (modalForm) {
+        modalForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const input = document.getElementById('message-modal-text');
+            const text = input ? input.value : '';
+            if (text && pendingMessageTarget) {
+                await sendInitialMessage(pendingMessageTarget, text);
+                pendingMessageTarget = null;
+            }
         });
     }
 
