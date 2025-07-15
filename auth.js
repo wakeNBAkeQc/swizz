@@ -2,6 +2,17 @@ function initAuthGuard(requireAuth = false) {
   firebase.auth().onAuthStateChanged(user => {
     const span = document.getElementById('user-info');
     if (span) span.textContent = user ? (user.displayName || user.email) : '';
+    const loginLink = document.getElementById('login-link');
+    const signupLink = document.getElementById('signup-link');
+    const logoutLink = document.getElementById('logout-link');
+    if (loginLink) loginLink.style.display = user ? 'none' : 'inline';
+    if (signupLink) signupLink.style.display = user ? 'none' : 'inline';
+    if (logoutLink) logoutLink.style.display = user ? 'inline' : 'none';
+    if (user) {
+      hideSignupPrompt();
+    } else {
+      showSignupPrompt();
+    }
     const page = location.pathname.split('/').pop();
     const authPages = ['login.html', 'signup.html'];
     if (!user && requireAuth) {
@@ -72,4 +83,24 @@ function loginGoogle() {
       window.location.href = 'map.html';
     })
     .catch(err => alert(err.message));
+}
+
+function showSignupPrompt() {
+  const page = location.pathname.split('/').pop();
+  const exclude = ['accueil.html', 'about.html', 'login.html', 'signup.html'];
+  if (exclude.includes(page)) return;
+  if (document.getElementById('signup-box')) return;
+  const box = document.createElement('div');
+  box.id = 'signup-box';
+  box.className = 'signup-box';
+  box.innerHTML =
+    '<p>Inscris-toi pour profiter pleinement de Zwizz.</p>' +
+    '<a href="signup.html" class="button">Inscription</a>' +
+    '<a href="login.html" class="button">Connexion</a>';
+  document.body.appendChild(box);
+}
+
+function hideSignupPrompt() {
+  const box = document.getElementById('signup-box');
+  if (box) box.remove();
 }
