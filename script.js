@@ -144,7 +144,7 @@ function logoutUser() {
     window.location.href = 'login.html';
 }
 
-function cleanupPins() {
+async function cleanupPins() {
     const pins = getPins();
     const uid = firebase.auth().currentUser?.uid;
     if (!uid) return;
@@ -153,6 +153,19 @@ function cleanupPins() {
         localStorage.setItem('userPinIndex', String(idx));
     } else {
         localStorage.removeItem('userPinIndex');
+        if (window.db) {
+            try {
+                await db.collection('pins').doc(uid).delete();
+                const snap = await db.collection('pins').where('id', '==', uid).get();
+                const promises = [];
+                snap.forEach(doc => {
+                    if (doc.id !== uid) promises.push(doc.ref.delete());
+                });
+                await Promise.all(promises);
+            } catch (_) {
+                // ignore cleanup errors
+            }
+        }
     }
 }
 
@@ -248,12 +261,12 @@ function initProfileForm() {
 async function initMap() {
     await syncPinsFromFirestore();
     // Determine the current user's pin index
-    cleanupPins();
+    await cleanupPins();
 
     // Listen for storage changes from other tabs to keep state in sync
-    window.addEventListener('storage', e => {
+    window.addEventListener('storage', async e => {
         if (e.key === 'pins' || e.key === 'userPinIndex') {
-            cleanupPins();
+            await cleanupPins();
             location.reload();
         }
     });
@@ -329,9 +342,13 @@ async function initMap() {
         }
     });
 
-    map.on('click', e => {
-        cleanupPins();
+    map.on('click', async e => {
+        await cleanupPins();
         const uid = firebase.auth().currentUser?.uid;
+        if (!uid) {
+            alert('Authentification en cours, veuillez réessayer.');
+            return;
+        }
         const existing = mapPins.findIndex(p => p.id === uid);
         if (existing >= 0) {
             alert('Vous avez déjà ajouté un pin.');
@@ -357,7 +374,9 @@ async function initMap() {
             localStorage.setItem('userPinIndex', pins.length - 1);
         }
         if (uid && window.db) {
-            db.collection('pins').doc(uid).set(fullPin);
+            try {
+                await db.collection('pins').doc(uid).set(fullPin);
+            } catch (_) {}
         }
         userMarker = marker;
         userMarker.on('click', removeUserPin);
@@ -543,9 +562,9 @@ function applyFilters() {
 document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
     await syncUserInfoFromFirestore();
-    cleanupPins();
+    await cleanupPins();
     await syncPinsFromFirestore();
-    cleanupPins();
+    await cleanupPins();
     displayRandomProfiles();
     displayFavorites();
     const btnState = localStorage.getItem('userPinIndex') !== null ? 'block' : 'none';
