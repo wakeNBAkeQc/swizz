@@ -180,7 +180,7 @@ async function cleanupPins() {
         if (window.db) {
             try {
                 await db.collection('pins').doc(uid).delete();
-                const snap = await db.collection('pins').where('id', '==', uid).get();
+                const snap = await db.collection('pins').where('uid', '==', uid).get();
                 const promises = [];
                 snap.forEach(doc => {
                     if (doc.id !== uid) promises.push(doc.ref.delete());
