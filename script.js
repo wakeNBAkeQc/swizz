@@ -467,7 +467,16 @@ async function initMap() {
             window.location.href = 'profil.html';
             return;
         }
-        const pinData = { id: uid, name: info.name, age: info.age, gender: info.gender, photo: info.photo, likes: 0, likedBy: [] };
+        let likes = 0;
+        if (window.db) {
+            try {
+                const doc = await db.collection('profils').doc(uid).get();
+                if (doc.exists && typeof doc.data().likes === 'number') {
+                    likes = doc.data().likes;
+                }
+            } catch (_) {}
+        }
+        const pinData = { id: uid, name: info.name, age: info.age, gender: info.gender, photo: info.photo, likes, likedBy: [] };
         const marker = L.marker(e.latlng, {riseOnHover:true}).addTo(map)
             .bindPopup(popupHtml(pinData, pins.length))
             .openPopup();
@@ -492,9 +501,9 @@ async function initMap() {
                         photoURL: info.photo || null
                     },
                     likedBy: [],
-                    likes: 0
+                    likes
                 });
-                await db.collection('profils').doc(uid).set({ likes: 0 }, { merge: true });
+                await db.collection('profils').doc(uid).set({ likes }, { merge: true });
             } catch (_) {}
         }
         userMarker = marker;
@@ -621,13 +630,76 @@ function openMessageModal(id) {
     sendBtn.onclick = async () => {
         const text = textarea.value.trim();
         if (text) {
-            const msgs = await loadMessages();
-            if (!msgs[id]) msgs[id] = [];
-            msgs[id].push(escapeHtml(text));
-            await saveMessages(msgs);
+            await sendMessage(id, text);
         }
         modal.style.display = 'none';
     };
+}
+
+async function sendMessage(toId, text) {
+    const user = firebase.auth().currentUser;
+    if (!user || !toId || !window.db) return;
+    const sanitized = escapeHtml(text);
+    try {
+        const targetRef = db.collection('profils').doc(toId);
+        const targetDoc = await targetRef.get();
+        const targetMsgs = targetDoc.exists && targetDoc.data().messages ? targetDoc.data().messages : {};
+        if (!Array.isArray(targetMsgs[user.uid])) targetMsgs[user.uid] = [];
+        targetMsgs[user.uid].push(sanitized);
+        await targetRef.set({ messages: targetMsgs }, { merge: true });
+
+        const selfRef = db.collection('profils').doc(user.uid);
+        const selfDoc = await selfRef.get();
+        const selfMsgs = selfDoc.exists && selfDoc.data().messages ? selfDoc.data().messages : {};
+        if (!Array.isArray(selfMsgs[toId])) selfMsgs[toId] = [];
+        selfMsgs[toId].push(sanitized);
+        await selfRef.set({ messages: selfMsgs }, { merge: true });
+    } catch (err) {
+        console.error('sendMessage error:', err);
+    }
+}
+
+async function displayMessages() {
+    const container = document.getElementById('messages-container');
+    if (!container) return;
+    container.innerHTML = '';
+    const msgs = await loadMessages();
+    const entries = Object.entries(msgs);
+    if (entries.length === 0) {
+        container.textContent = 'Aucun message.';
+        return;
+    }
+    for (const [uid, list] of entries) {
+        const doc = await db.collection('profils').doc(uid).get();
+        const name = doc.exists ? (doc.data().nom || '') : uid;
+        const thread = document.createElement('div');
+        thread.className = 'message-thread';
+        const title = document.createElement('h3');
+        title.textContent = name;
+        thread.appendChild(title);
+        list.forEach(t => {
+            const p = document.createElement('p');
+            p.textContent = t;
+            thread.appendChild(p);
+        });
+        const form = document.createElement('form');
+        const area = document.createElement('textarea');
+        const btn = document.createElement('button');
+        btn.textContent = 'Répondre';
+        form.appendChild(area);
+        form.appendChild(btn);
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const text = area.value.trim();
+            if (text) {
+                await sendMessage(uid, text);
+                area.value = '';
+                await displayMessages();
+            }
+        });
+        thread.appendChild(form);
+        container.appendChild(thread);
+    }
 }
 
 async function displayFavorites() {
@@ -755,6 +827,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         modal.addEventListener('click', e => {
             if (e.target === modal) modal.style.display = 'none';
         });
+    }
+
+    if (document.getElementById('messages-container')) {
+        displayMessages();
     }
 
 });
