@@ -1,5 +1,10 @@
 function initAuthGuard(requireAuth = false) {
   firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      if (typeof syncPinsFromFirestore === 'function') {
+        syncPinsFromFirestore().catch(() => {});
+      }
+    }
     const span = document.getElementById('user-info');
     if (span) span.textContent = user ? (user.displayName || user.email) : '';
     const loginLink = document.getElementById('login-link');

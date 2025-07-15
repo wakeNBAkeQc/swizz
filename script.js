@@ -39,12 +39,23 @@ let mapInstance = null;
 
 async function fetchFirestorePins() {
     if (!window.db) return [];
-    const snap = await db.collection('pins').get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    try {
+        const snap = await db.collection('pins').get();
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+        console.error('Failed to fetch pins from Firestore:', err);
+        return getPins();
+    }
 }
 
 async function syncPinsFromFirestore() {
-    const pins = await fetchFirestorePins();
+    let pins = [];
+    try {
+        pins = await fetchFirestorePins();
+    } catch (err) {
+        console.error('Error syncing pins from Firestore:', err);
+        pins = getPins();
+    }
     savePins(pins);
     const uid = firebase.auth().currentUser?.uid;
     const idx = pins.findIndex(p => p.id === uid);
