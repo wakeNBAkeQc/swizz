@@ -48,6 +48,11 @@
 <script src="firebase-init.js"></script>
 <script src="auth.js"></script>
 <script src="script.js"></script>
-<script>initAuthGuard(true);</script>
+<script>
+    initAuthGuard(true);
+    // Initialize the profile form right away so any cached info
+    // is displayed even if network requests fail
+    if (typeof initProfileForm === 'function') initProfileForm();
+</script>
 </body>
 </html>

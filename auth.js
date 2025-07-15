@@ -6,8 +6,10 @@ function initAuthGuard(requireAuth = false) {
       }
       if (typeof syncUserInfoFromFirestore === 'function') {
         syncUserInfoFromFirestore()
-          .then(() => { if (typeof initProfileForm === 'function') initProfileForm(); })
-          .catch(() => {});
+          .catch(() => {})
+          .finally(() => {
+            if (typeof initProfileForm === 'function') initProfileForm();
+          });
       } else if (typeof initProfileForm === 'function') {
         initProfileForm();
       }
