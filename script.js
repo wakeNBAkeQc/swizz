@@ -18,7 +18,7 @@ async function loadUserInfo() {
                 name: data.nom || '',
                 age: data.age || '',
                 gender: data.genre || '',
-                photo: data.photo || null
+                photo: data.photo || data.photoURL || null
             };
             // Update local cache so future loads work without Firestore.
             localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(info));
@@ -44,7 +44,8 @@ async function saveUserInfo(info) {
                 nom: info.name,
                 age: parseInt(info.age, 10) || null,
                 genre: info.gender,
-                photo: info.photo || null
+                photo: info.photo || null,
+                photoURL: info.photo || null
             }, { merge: true });
         } catch (err) {
             console.error('saveUserInfo error:', err);
@@ -99,7 +100,7 @@ function pinFromDoc(doc) {
         name: snap.nom || '',
         age: snap.age || '',
         gender: snap.genre || '',
-        photo: snap.photo || null,
+        photo: snap.photo || snap.photoURL || null,
         lastSeen: data.timestamp || null
     };
 }
@@ -392,7 +393,8 @@ async function initMap() {
                 nom: p.name,
                 age: parseInt(p.age, 10) || null,
                 genre: p.gender,
-                photo: p.photo || null
+                photo: p.photo || null,
+                photoURL: p.photo || null
             };
             db.collection('pins').doc(uid).set({
                 uid,
@@ -482,7 +484,8 @@ async function initMap() {
                         nom: info.name,
                         age: parseInt(info.age, 10) || null,
                         genre: info.gender,
-                        photo: info.photo || null
+                        photo: info.photo || null,
+                        photoURL: info.photo || null
                     }
                 });
             } catch (_) {}
