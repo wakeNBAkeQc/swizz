@@ -90,6 +90,18 @@ let profileFormInitialized = false;
 let profilePhotoData = null;
 let pendingMessageTarget = null;
 
+async function getCurrentUser() {
+    if (firebase.auth().currentUser) {
+        return firebase.auth().currentUser;
+    }
+    return new Promise(resolve => {
+        const unsub = firebase.auth().onAuthStateChanged(u => {
+            unsub();
+            resolve(u);
+        });
+    });
+}
+
 function pinFromDoc(doc) {
     const data = doc.data();
     const snap = data.profilSnapshot || {};
@@ -678,7 +690,7 @@ async function startConversation(otherId) {
 }
 
 async function sendInitialMessage(otherId, text) {
-    const user = firebase.auth().currentUser;
+    const user = await getCurrentUser();
     if (!user || !otherId || !text || !window.db) return;
     const sanitized = escapeHtml(text.trim());
     if (!sanitized) return;
