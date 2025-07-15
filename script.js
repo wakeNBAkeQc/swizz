@@ -61,7 +61,8 @@ async function saveUserPin(lat, lng) {
         pins.push({ id: user.uid, ...pinData });
         savePins(pins);
         mapPins = pins;
-        localStorage.setItem('userPinIndex', user.uid);
+        const newIndex = pins.length - 1;
+        localStorage.setItem('userPinIndex', String(newIndex));
         alert('Pin sauvegardé');
     } catch (err) {
         console.error('saveUserPin error:', err);
@@ -114,8 +115,13 @@ async function syncPinsFromFirestore() {
         savePins(pins);
         mapPins = pins;
         const uid = firebase.auth().currentUser?.uid;
-        if (uid && !pins.some(p => p.id === uid)) {
-            localStorage.removeItem('userPinIndex');
+        if (uid) {
+            const idx = pins.findIndex(p => p.id === uid);
+            if (idx >= 0) {
+                localStorage.setItem('userPinIndex', String(idx));
+            } else {
+                localStorage.removeItem('userPinIndex');
+            }
         }
         return pins;
     } catch (err) {
@@ -394,7 +400,7 @@ async function initMap() {
         markers.push(marker);
         savePins(pins);
         if (uid) {
-            localStorage.setItem('userPinIndex', pins.length - 1);
+            localStorage.setItem('userPinIndex', String(pins.length - 1));
         }
         if (uid && window.db) {
             try {
