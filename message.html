@@ -23,9 +23,16 @@
     <a href="#" id="logout-link">Déconnexion</a>
     <span id="user-info"></span>
 </nav>
-<main>
-    <h1>Messages</h1>
-    <div id="messages-container"></div>
+<main id="conversation">
+    <div id="conversation-header">
+        <img id="convo-photo" class="popup-photo" style="display:none;">
+        <h1 id="convo-name"></h1>
+    </div>
+    <div id="conversation-messages"></div>
+    <form id="send-form">
+        <input id="message-input" type="text" placeholder="Écrire un message" autocomplete="off">
+        <button type="submit">Envoyer</button>
+    </form>
 </main>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -34,6 +41,6 @@
 <script src="firebase-init.js"></script>
 <script src="auth.js"></script>
 <script src="script.js"></script>
-<script>initAuthGuard(true); displayMessages();</script>
+<script>initAuthGuard(true); const uid = new URLSearchParams(location.search).get('uid'); if(uid){displayConversation(uid);}</script>
 </body>
 </html>

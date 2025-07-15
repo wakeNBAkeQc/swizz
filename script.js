@@ -440,7 +440,7 @@ async function initMap() {
         if (msgBtn) {
             msgBtn.addEventListener('click', () => {
                 const id = msgBtn.dataset.id;
-                openMessageModal(id);
+                startConversation(id);
             });
         }
         const removeBtn = el.querySelector('.remove-pin-btn');
@@ -620,42 +620,98 @@ async function displayRandomProfiles() {
     });
 }
 
-function openMessageModal(id) {
-    const modal = document.getElementById('message-modal');
-    if (!modal) return;
-    modal.style.display = 'block';
-    const textarea = modal.querySelector('textarea');
-    const sendBtn = modal.querySelector('button');
-    textarea.value = '';
-    sendBtn.onclick = async () => {
-        const text = textarea.value.trim();
-        if (text) {
-            await sendMessage(id, text);
-        }
-        modal.style.display = 'none';
-    };
+async function startConversation(otherId) {
+    const user = firebase.auth().currentUser;
+    if (!user || !otherId || !window.db) return;
+    const convoId = [user.uid, otherId].sort().join('_');
+    const convoRef = db.collection('conversations').doc(convoId);
+    const convoDoc = await convoRef.get();
+    if (!convoDoc.exists) {
+        const [selfDoc, targetDoc] = await Promise.all([
+            db.collection('profils').doc(user.uid).get(),
+            db.collection('profils').doc(otherId).get()
+        ]);
+        const selfInfo = selfDoc.exists ? selfDoc.data() : {};
+        const targetInfo = targetDoc.exists ? targetDoc.data() : {};
+        await convoRef.set({
+            participants: [user.uid, otherId],
+            users: {
+                [user.uid]: { name: selfInfo.nom || user.displayName || '', photo: selfInfo.photo || selfInfo.photoURL || null },
+                [otherId]: { name: targetInfo.nom || '', photo: targetInfo.photo || targetInfo.photoURL || null }
+            },
+            lastMessage: '',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+    window.location.href = `message.html?uid=${otherId}`;
 }
 
-async function sendMessage(toId, text) {
-    const user = firebase.auth().currentUser;
-    if (!user || !toId || !window.db) return;
-    const sanitized = escapeHtml(text);
-    try {
-        const targetRef = db.collection('profils').doc(toId);
-        const targetDoc = await targetRef.get();
-        const targetMsgs = targetDoc.exists && targetDoc.data().messages ? targetDoc.data().messages : {};
-        if (!Array.isArray(targetMsgs[user.uid])) targetMsgs[user.uid] = [];
-        targetMsgs[user.uid].push(sanitized);
-        await targetRef.set({ messages: targetMsgs }, { merge: true });
+function getQueryParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+}
 
-        const selfRef = db.collection('profils').doc(user.uid);
-        const selfDoc = await selfRef.get();
-        const selfMsgs = selfDoc.exists && selfDoc.data().messages ? selfDoc.data().messages : {};
-        if (!Array.isArray(selfMsgs[toId])) selfMsgs[toId] = [];
-        selfMsgs[toId].push(sanitized);
-        await selfRef.set({ messages: selfMsgs }, { merge: true });
-    } catch (err) {
-        console.error('sendMessage error:', err);
+async function displayConversation(otherId) {
+    const user = firebase.auth().currentUser;
+    if (!user || !otherId || !window.db) return;
+    const convoId = [user.uid, otherId].sort().join('_');
+    const convoRef = db.collection('conversations').doc(convoId);
+
+    const headerName = document.getElementById('convo-name');
+    const headerPhoto = document.getElementById('convo-photo');
+    const messagesEl = document.getElementById('conversation-messages');
+    if (!messagesEl) return;
+
+    const doc = await convoRef.get();
+    if (doc.exists) {
+        const data = doc.data();
+        const info = data.users && data.users[otherId] ? data.users[otherId] : {};
+        if (headerName) headerName.textContent = info.name || 'Conversation';
+        if (headerPhoto) {
+            if (info.photo) {
+                headerPhoto.src = info.photo;
+                headerPhoto.style.display = 'block';
+            } else {
+                headerPhoto.style.display = 'none';
+            }
+        }
+    }
+
+    convoRef.collection('messages').orderBy('timestamp')
+        .onSnapshot(snap => {
+            messagesEl.innerHTML = '';
+            snap.forEach(d => {
+                const m = d.data();
+                const div = document.createElement('div');
+                div.className = 'chat-message ' + (m.from === user.uid ? 'sent' : 'received');
+                const span = document.createElement('span');
+                span.innerHTML = m.text;
+                div.appendChild(span);
+                messagesEl.appendChild(div);
+                requestAnimationFrame(() => div.classList.add('show'));
+            });
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        });
+
+    const form = document.getElementById('send-form');
+    if (form) {
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const input = document.getElementById('message-input');
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) return;
+            const sanitized = escapeHtml(text);
+            await convoRef.collection('messages').add({
+                from: user.uid,
+                text: sanitized,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await convoRef.set({
+                lastMessage: sanitized,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            input.value = '';
+        });
     }
 }
 
@@ -829,7 +885,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    if (document.getElementById('messages-container')) {
+    const convoEl = document.getElementById('conversation-messages');
+    if (convoEl) {
+        const uid = getQueryParam('uid');
+        if (uid) displayConversation(uid);
+    } else if (document.getElementById('messages-container')) {
         displayMessages();
     }
 
