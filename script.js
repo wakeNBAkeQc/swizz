@@ -569,7 +569,6 @@ function applyFilters() {
 document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
     await syncUserInfoFromFirestore();
-    await cleanupPins();
     await syncPinsFromFirestore();
     await cleanupPins();
     displayRandomProfiles();
