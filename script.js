@@ -13,6 +13,7 @@ function saveUserInfo(info) {
     if (index !== null) {
         const pins = getPins();
         if (pins[index]) {
+            pins[index].name = info.name;
             pins[index].age = info.age;
             pins[index].gender = info.gender;
             pins[index].photo = info.photo;
@@ -65,12 +66,15 @@ function escapeHtml(str) {
 }
 
 function logoutUser() {
+    if (window.firebase?.auth) {
+        firebase.auth().signOut().catch(() => {});
+    }
     localStorage.removeItem('ageVerified');
     localStorage.removeItem('birthDate');
     localStorage.removeItem('userInfo');
     localStorage.removeItem('pins');
     localStorage.removeItem('userPinIndex');
-    window.location.href = 'index.html';
+    window.location.href = 'login.html';
 }
 
 function cleanupPins() {
@@ -110,15 +114,17 @@ function popupHtml(p, idx) {
         }
     }
 
+    const name = escapeHtml(p.name || '');
     const age = escapeHtml(String(p.age));
     const gender = escapeHtml(p.gender);
-    return `${img}<p>${age} ans – ${gender}</p>${status}${likeBtn}${favBtn}${msgBtn}${messagesHtml}`;
+    return `${img}<p><strong>${name}</strong><br>${age} ans – ${gender}</p>${status}${likeBtn}${favBtn}${msgBtn}${messagesHtml}`;
 }
 
 function initProfileForm() {
     const form = document.getElementById('profile-form');
     if (!form) return;
     const info = loadUserInfo();
+    if (info.name) form.name.value = info.name;
     if (info.age) form.age.value = info.age;
     if (info.gender) form.gender.value = info.gender;
     let photoData = info.photo || null;
@@ -145,7 +151,12 @@ function initProfileForm() {
     }
     form.addEventListener('submit', e => {
         e.preventDefault();
-        saveUserInfo({ age: form.age.value, gender: form.gender.value, photo: photoData });
+        saveUserInfo({
+            name: form.name.value,
+            age: form.age.value,
+            gender: form.gender.value,
+            photo: photoData
+        });
         alert('Profil sauvegardé');
     });
 }
@@ -231,11 +242,11 @@ function initMap() {
             return;
         }
         const info = loadUserInfo();
-        if (!info.age || !info.gender) {
-            alert('Veuillez remplir votre âge et genre dans le profil.');
+        if (!info.name || !info.age || !info.gender) {
+            alert('Veuillez remplir votre nom, âge et genre dans le profil.');
             return;
         }
-        const pinData = { age: info.age, gender: info.gender, photo: info.photo, likes: 0 };
+        const pinData = { name: info.name, age: info.age, gender: info.gender, photo: info.photo, likes: 0 };
         const marker = L.marker(e.latlng, {riseOnHover:true}).addTo(map)
             .bindPopup(popupHtml(pinData, pins.length))
             .openPopup();
@@ -311,7 +322,7 @@ function displayRandomProfiles() {
             div.appendChild(img);
         }
         const info = document.createElement('p');
-        info.textContent = `${p.age} ans – ${p.gender}`;
+        info.textContent = `${p.name} - ${p.age} ans – ${p.gender}`;
         div.appendChild(info);
         const likes = document.createElement('span');
         likes.textContent = `Likes: ${p.likes || 0}`;
@@ -357,7 +368,7 @@ function displayFavorites() {
             div.appendChild(img);
         }
         const info = document.createElement('p');
-        info.textContent = `${p.age} ans – ${p.gender}`;
+        info.textContent = `${p.name} - ${p.age} ans – ${p.gender}`;
         div.appendChild(info);
         const likes = document.createElement('span');
         likes.textContent = `Likes: ${p.likes || 0}`;
@@ -398,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
     cleanupPins();
     initProfileForm();
+    initAuthGuard(document.body.dataset.auth === 'required');
     displayRandomProfiles();
     displayFavorites();
     const btn = document.getElementById('remove-pin');
