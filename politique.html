@@ -8,20 +8,7 @@
     <title>Politique d'utilisation</title>
 </head>
 <body>
-<nav>
-    <img src="logozwizz.png" alt="Zwizz" class="logo">
-    <a href="accueil.html">Accueil</a>
-    <a href="map.html">Carte</a>
-    <a href="profil.html">Profil</a>
-    <a href="securite.html">Sécurité</a>
-    <a href="aide.html">Aide</a>
-    <a href="about.html">À propos</a>
-    <a href="message.html">Messages</a>
-    <a href="login.html" id="login-link">Connexion</a>
-    <a href="signup.html" id="signup-link">Inscription</a>
-    <a href="#" id="logout-link">Déconnexion</a>
-    <span id="user-info"></span>
-</nav>
+<div id="nav-container"></div>
 <main>
     <h1>🛡️ Politique d’utilisation de Zwizz</h1>
     <p>Bienvenue sur Zwizz, une plateforme de rencontre pensée pour créer des liens rapides, spontanés et respectueux.<br>
@@ -57,6 +44,6 @@
 <script src="firebase-init.js"></script>
 <script src="auth.js"></script>
 <script src="script.js"></script>
-<script>initAuthGuard(false);</script>
+<script>fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(false);});</script>
 </body>
 </html>

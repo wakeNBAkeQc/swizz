@@ -8,20 +8,7 @@
   <title>Connexion</title>
 </head>
 <body>
-  <nav>
-    <img src="logozwizz.png" alt="Zwizz" class="logo">
-    <a href="accueil.html">Accueil</a>
-    <a href="map.html">Carte</a>
-    <a href="profil.html">Profil</a>
-    <a href="securite.html">Sécurité</a>
-    <a href="aide.html">Aide</a>
-    <a href="about.html">À propos</a>
-    <a href="message.html">Messages</a>
-    <a href="login.html" id="login-link">Connexion</a>
-    <a href="signup.html" id="signup-link">Inscription</a>
-    <a href="#" id="logout-link">Déconnexion</a>
-    <span id="user-info"></span>
-  </nav>
+  <div id="nav-container"></div>
   <main>
     <h1>Zwizz est un espace de rencontres réservé aux 18 ans et plus.</h1>
     <p>En te connectant, tu confirmes être majeur(e) et accepter notre <a href="politique.html">politique d’utilisation</a>.<br>
@@ -52,7 +39,7 @@
   <script>
     document.getElementById('login-form').addEventListener('submit', login);
     document.getElementById('google-login').addEventListener('click', loginGoogle);
-    initAuthGuard(false);
+    fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(false);});
   </script>
 </body>
 </html>
