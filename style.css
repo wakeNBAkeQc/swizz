@@ -1,15 +1,16 @@
 body {
+    --accent-start: #8f44fd;
+    --accent-end: #5e17eb;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    background: url("logozwizz.png") no-repeat center center fixed;
-    background-size: cover;
-    color: #333;
+    background: #0d0d0d;
+    color: #fff;
     animation: fadeIn 0.6s ease-in;
 }
 
 body.message-page {
-    background: #000;
+    background: #0d0d0d;
     color: #fff;
 }
 
@@ -21,12 +22,15 @@ nav {
 }
 
 nav {
-    background: #4b0082;
+    position: sticky;
+    top: 0;
+    background: #0d0d0d;
     padding: 0.5em 1em;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    z-index: 1000;
 }
 
 .popup-photo {
@@ -76,9 +80,16 @@ nav {
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes pulseGlow {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 var(--accent-start)); }
+    50% { transform: scale(1.05); filter: drop-shadow(0 0 8px var(--accent-start)); }
+}
+
 nav .logo {
     height: 40px;
     margin-right: 1em;
+    animation: pulseGlow 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px var(--accent-start));
 }
 
 nav a {
@@ -102,10 +113,10 @@ nav a:hover {
 main {
     max-width: 800px;
     margin: 2em auto;
-    background: rgba(255, 255, 255, 0.9);
+    background: #1a1a1a;
     padding: 2em;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 body.message-page main {
@@ -116,16 +127,17 @@ body.message-page main {
 .button {
     display: inline-block;
     padding: 10px 20px;
-    background: linear-gradient(45deg, #4b0082, #800080);
+    background: linear-gradient(45deg, var(--accent-start), var(--accent-end));
     color: #fff;
     text-decoration: none;
-    border-radius: 4px;
-    transition: background 0.3s ease, transform 0.3s ease;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .button:hover {
-    background: linear-gradient(45deg, #800080, #4b0082);
     transform: scale(1.05);
+    box-shadow: 0 0 10px var(--accent-start);
 }
 
 form {
@@ -150,10 +162,11 @@ select {
 }
 
 .profile-card {
-    background: #f5f5f5;
+    background: #1a1a1a;
     padding: 1em;
-    border-radius: 4px;
+    border-radius: 8px;
     margin-bottom: 1em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
 }
 #map {
     width: 100%;
@@ -163,13 +176,18 @@ select {
 }
 
 .fav-btn {
-    background: #ff4081;
+    background: linear-gradient(45deg, var(--accent-start), var(--accent-end));
     color: #fff;
     border: none;
     padding: 0.3em 0.6em;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     margin-left: 0.5em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    transition: box-shadow 0.3s ease;
+}
+.fav-btn:hover {
+    box-shadow: 0 0 6px var(--accent-start);
 }
 
 .status-indicator {
@@ -183,10 +201,10 @@ select {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #fff;
+    background: #1a1a1a;
     padding: 1em;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.6);
     z-index: 1000;
 }
 .message-box textarea {
@@ -203,10 +221,10 @@ select {
 }
 
 .message-thread {
-    background: #fff;
+    background: #1a1a1a;
     padding: 1em;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
     margin-bottom: 1em;
 }
 
@@ -231,20 +249,20 @@ select {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #fff;
+    background: #1a1a1a;
     padding: 1em;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.6);
     z-index: 1000;
     max-width: 90%;
     overflow-y: auto;
 }
 
 #filter-menu {
-    background: #fff;
+    background: #1a1a1a;
     padding: 1em;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
     margin-bottom: 1em;
 }
 #filter-menu label {
@@ -259,24 +277,29 @@ select {
     nav a {
         margin: 0.2em;
     }
+    nav {
+        flex-direction: column;
+        align-items: flex-start;
+    }
     form {
         width: 90%;
     }
 }
 
 .profile-container {
-    background: linear-gradient(135deg, #ffe0f0, #e0e0ff);
+    background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
     padding: 2em;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
     max-width: 400px;
     margin: 0 auto;
 }
 
 #profile-form input,
 #profile-form select {
-    background: #fff;
-    border: 1px solid #ccc;
+    background: #222;
+    border: 1px solid #555;
+    color: #fff;
     border-radius: 4px;
 }
 
@@ -358,9 +381,10 @@ select {
     color: #fff;
 }
 #send-form button {
-    background: #4b0082;
+    background: linear-gradient(45deg, var(--accent-start), var(--accent-end));
     color: #fff;
     border: none;
     border-radius: 20px;
     padding: 0 1em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
