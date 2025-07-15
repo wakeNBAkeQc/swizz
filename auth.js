@@ -23,7 +23,8 @@ function register(e) {
   const name = document.getElementById('name').value.trim();
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
-  const age = parseInt(document.getElementById('age').value, 10);
+  const dobStr = document.getElementById('dob').value;
+  const age = calculateAge(new Date(dobStr));
   const gender = document.getElementById('gender').value;
   const policyAccepted = document.getElementById('policy-check')?.checked;
   const policyErr = document.getElementById('policy-error');
@@ -46,12 +47,14 @@ function register(e) {
           nom: name,
           email: cred.user.email,
           age,
+          birthDate: dobStr,
           genre,
           photoURL: cred.user.photoURL || null
         })
       ]);
     })
     .then(() => {
+      localStorage.setItem('signupBirthDate', dobStr);
       window.location.href = 'map.html';
     })
     .catch(err => alert(err.message));
