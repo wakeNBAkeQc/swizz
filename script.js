@@ -149,9 +149,8 @@ function logoutUser() {
     }
     localStorage.removeItem('ageVerified');
     localStorage.removeItem('birthDate');
-    localStorage.removeItem('userInfo');
-    localStorage.removeItem('pins');
-    localStorage.removeItem('userPinIndex');
+    // Do not clear userInfo, pins or userPinIndex so profile details and
+    // markers remain after logout
     window.location.href = 'login.html';
 }
 
