@@ -22,6 +22,7 @@
     <span id="user-info"></span>
   </nav>
   <main>
+    <h2>Site de rencontre rapide pour les gens proche de toi 18 +</h2>
     <h1>Inscription</h1>
     <form id="signup-form">
       <label for="name">Nom ou surnom</label>
@@ -38,9 +39,28 @@
         <option value="femme">Femme</option>
         <option value="autre">Autre</option>
       </select>
+      <label style="margin-top:1em;">
+        <input type="checkbox" id="policy-check" required>
+        J'accepte la <a href="#" id="policy-link">politique d'utilisation</a>
+      </label>
+      <p id="policy-error" style="color:red; display:none;">Vous devez accepter la politique d'utilisation pour continuer.</p>
       <button type="submit" class="button">S'inscrire</button>
     </form>
     <button id="google-signup" class="button" style="margin-top:1em;">Connexion avec Google</button>
+    <div id="policy-overlay" class="modal-overlay" style="display:none;"></div>
+    <div id="policy-modal" class="modal" style="display:none;">
+      <h2>Politique d'utilisation</h2>
+      <p>Cette page décrit les règles essentielles pour participer au service Zwizz. En accédant au site, vous acceptez ces conditions :</p>
+      <ol>
+        <li>Zwizz permet uniquement de partager une localisation approximative. Les informations saisies restent dans votre navigateur et ne sont pas conservées par nos serveurs.</li>
+        <li>Vous vous engagez à respecter les autres utilisateurs et à ne pas publier de contenus injurieux, offensants ou illégaux.</li>
+        <li>Ne divulguez pas vos informations personnelles sensibles et soyez vigilant lors de toute rencontre avec des inconnus.</li>
+        <li>Zwizz n'est pas responsable des rencontres physiques. Prenez toujours les mesures de sécurité nécessaires et privilégiez les lieux publics.</li>
+        <li>Tout comportement abusif pourra entraîner une exclusion immédiate de la plateforme.</li>
+      </ol>
+      <p>En continuant, vous confirmez avoir lu et accepté cette politique.</p>
+      <button id="policy-close" class="button">Fermer</button>
+    </div>
   </main>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -49,6 +69,7 @@
   <script src="firebase-init.js"></script>
   <script src="auth.js"></script>
   <script src="script.js"></script>
+  <script src="age-check.js"></script>
   <script>
     document.getElementById('signup-form').addEventListener('submit', register);
     document.getElementById('google-signup').addEventListener('click', loginGoogle);
