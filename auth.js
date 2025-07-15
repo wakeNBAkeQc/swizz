@@ -5,7 +5,13 @@ function initAuthGuard(requireAuth = false) {
         syncPinsFromFirestore().catch(() => {});
       }
       if (typeof syncUserInfoFromFirestore === 'function') {
-        syncUserInfoFromFirestore().catch(() => {});
+        syncUserInfoFromFirestore()
+          .catch(() => {})
+          .finally(() => {
+            if (typeof initProfileForm === 'function') initProfileForm();
+          });
+      } else if (typeof initProfileForm === 'function') {
+        initProfileForm();
       }
     }
     const span = document.getElementById('user-info');
