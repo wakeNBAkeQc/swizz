@@ -283,16 +283,23 @@ async function initProfileForm() {
     if (!profileFormInitialized) {
         profileFormInitialized = true;
         if (photoInput) {
-            photoInput.addEventListener('change', e => {
+            photoInput.addEventListener('change', async e => {
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = () => {
+                reader.onload = async () => {
                     profilePhotoData = reader.result;
                     if (photoPreview) {
                         photoPreview.src = profilePhotoData;
                         photoPreview.style.display = 'block';
                     }
+                    // Save the new photo immediately so it persists after a refresh
+                    await saveUserInfo({
+                        name: form.name.value,
+                        age: form.age.value,
+                        gender: form.gender.value,
+                        photo: profilePhotoData
+                    });
                 };
                 reader.readAsDataURL(file);
             });
