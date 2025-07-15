@@ -405,7 +405,11 @@ async function initMap() {
                 lng: p.lng,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 profilSnapshot: snap,
-                likedBy: Array.isArray(p.likedBy) ? p.likedBy : []
+                likedBy: Array.isArray(p.likedBy) ? p.likedBy : [],
+                likes: Array.isArray(p.likedBy) ? p.likedBy.length : (p.likes || 0)
+            }, { merge: true });
+            db.collection('profils').doc(uid).set({
+                likes: Array.isArray(p.likedBy) ? p.likedBy.length : (p.likes || 0)
             }, { merge: true });
         }
     }
@@ -425,7 +429,8 @@ async function initMap() {
                 const likedBy = Array.isArray(data.likedBy) ? data.likedBy : [];
                 if (likedBy.includes(user.uid)) return;
                 likedBy.push(user.uid);
-                await ref.set({ likedBy }, { merge: true });
+                await ref.set({ likedBy, likes: likedBy.length }, { merge: true });
+                await db.collection('profils').doc(id).set({ likes: likedBy.length }, { merge: true });
                 likeBtn.textContent = `Like (${likedBy.length})`;
                 const pinIdx = parseInt(likeBtn.dataset.index, 10);
                 if (!Number.isNaN(pinIdx) && mapPins[pinIdx]) {
@@ -501,8 +506,10 @@ async function initMap() {
                         photo: info.photo || null,
                         photoURL: info.photo || null
                     },
-                    likedBy: []
+                    likedBy: [],
+                    likes: 0
                 });
+                await db.collection('profils').doc(uid).set({ likes: 0 }, { merge: true });
             } catch (_) {}
         }
         userMarker = marker;
@@ -649,13 +656,16 @@ async function displayFavorites() {
 
 async function displayReceivedLikes() {
     const list = document.getElementById('like-list');
+    const countEl = document.getElementById('likes-count');
     if (!list) return;
     list.innerHTML = '';
+    if (countEl) countEl.textContent = '';
     const uid = firebase.auth().currentUser?.uid;
     if (!uid || !window.db) return;
     try {
         const doc = await db.collection('pins').doc(uid).get();
         const likedBy = doc.exists && Array.isArray(doc.data().likedBy) ? doc.data().likedBy : [];
+        if (countEl) countEl.textContent = `Nombre de likes : ${likedBy.length}`;
         if (likedBy.length === 0) {
             list.textContent = 'Aucun like reçu.';
             return;
