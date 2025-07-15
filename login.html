@@ -39,7 +39,7 @@
   <script>
     document.getElementById('login-form').addEventListener('submit', login);
     document.getElementById('google-login').addEventListener('click', loginGoogle);
-    fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(false);});
+    fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(false);initDrawer();});
   </script>
 </body>
 </html>

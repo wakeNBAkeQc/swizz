@@ -26,6 +26,6 @@
 <script src="firebase-init.js"></script>
 <script src="auth.js"></script>
 <script src="script.js"></script>
-<script>fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(false);});</script>
+<script>fetch("nav.html").then(r=>r.text()).then(html=>{document.getElementById("nav-container").innerHTML=html;initAuthGuard(false);initDrawer();});</script>
 </body>
 </html>
