@@ -60,6 +60,36 @@ async function saveUserInfo(info) {
     }
 }
 
+async function saveUserProfile() {
+    const form = document.getElementById('profile-form');
+    if (!form) return;
+    await saveUserInfo({
+        name: form.name.value,
+        age: form.age.value,
+        gender: form.gender.value,
+        photo: profilePhotoData
+    });
+}
+
+async function loadUserProfile() {
+    const form = document.getElementById('profile-form');
+    if (!form) return;
+    const info = await loadUserInfo();
+    if (info.name) form.name.value = info.name;
+    if (info.age) form.age.value = info.age;
+    if (info.gender) form.gender.value = info.gender;
+    profilePhotoData = info.photo || null;
+    const preview = document.getElementById('photo-preview');
+    if (preview) {
+        if (profilePhotoData) {
+            preview.src = profilePhotoData;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+}
+
 async function getPins() {
     if (!window.db) return [];
     try {
@@ -265,21 +295,9 @@ function popupHtml(p, idx) {
 async function initProfileForm() {
     const form = document.getElementById('profile-form');
     if (!form) return;
-    const info = await loadUserInfo();
-    if (info.name) form.name.value = info.name;
-    if (info.age) form.age.value = info.age;
-    if (info.gender) form.gender.value = info.gender;
-    profilePhotoData = info.photo || null;
+    await loadUserProfile();
     const photoInput = document.getElementById('photo');
     const photoPreview = document.getElementById('photo-preview');
-    if (photoPreview) {
-        if (profilePhotoData) {
-            photoPreview.src = profilePhotoData;
-            photoPreview.style.display = 'block';
-        } else {
-            photoPreview.style.display = 'none';
-        }
-    }
     if (!profileFormInitialized) {
         profileFormInitialized = true;
         if (photoInput) {
@@ -299,12 +317,7 @@ async function initProfileForm() {
         }
         form.addEventListener('submit', async e => {
             e.preventDefault();
-            await saveUserInfo({
-                name: form.name.value,
-                age: form.age.value,
-                gender: form.gender.value,
-                photo: profilePhotoData
-            });
+            await saveUserProfile();
             alert('Profil sauvegardé');
         });
     }
