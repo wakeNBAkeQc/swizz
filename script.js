@@ -111,6 +111,29 @@ function cleanupPins() {
     }
 }
 
+
+function toJsDate(value) {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value === 'number') return new Date(value);
+    if (typeof value.toDate === 'function') return value.toDate();
+    if (typeof value === 'object' && typeof value.seconds === 'number') {
+        return new Date(value.seconds * 1000 + (value.nanoseconds || 0) / 1e6);
+    }
+    return null;
+}
+
+function formatLastSeen(lastSeen) {
+    const date = toJsDate(lastSeen);
+    if (!date) return "Vu il y a plus d'une semaine";
+    const diffMin = Math.floor((Date.now() - date.getTime()) / 60000);
+    if (diffMin < 2) return 'En ligne maintenant';
+    if (diffMin < 60) return `Vu il y a ${diffMin} minutes`;
+    if (diffMin < 1440) return `Vu il y a ${Math.floor(diffMin / 60)} heures`;
+    if (diffMin < 10080) return `Vu il y a ${Math.floor(diffMin / 1440)} jours`;
+    return "Vu il y a plus d'une semaine";
+}
+
 function popupHtml(p, idx) {
     const img = p.photo ? `<img src="${p.photo}" class="popup-photo">` : '';
     const likes = p.likes || 0;
@@ -118,10 +141,9 @@ function popupHtml(p, idx) {
     const favBtn = idx !== userIndex ? `<button class="fav-btn" data-index="${idx}">❤️ Ajouter aux favoris</button>` : '';
     const msgBtn = idx !== userIndex ? `<button class="msg-btn" data-index="${idx}">Envoyer un message</button>` : '';
 
-    const last = p.lastSeen || 0;
-    const diffMin = Math.floor((Date.now() - last) / 60000);
-    const online = diffMin < 10;
-    const status = `<span class="status-indicator" title="Dernière activité">${online ? '🟢 En ligne' : `🕒 Vu il y a ${diffMin} min`}</span>`;
+    const label = formatLastSeen(p.lastSeen);
+    const online = label === 'En ligne maintenant';
+    const status = `<span class="status-indicator" title="Dernière activité">${online ? '🟢' : '🕒'} ${label}</span>`;
 
     let messagesHtml = '';
     if (idx === userIndex) {
