@@ -183,8 +183,8 @@ function popupHtml(p, idx) {
     const img = p.photo ? `<img src="${p.photo}" class="popup-photo">` : '';
     const likes = p.likes || 0;
     const likeBtn = `<button class="like-btn" data-index="${idx}">Like (${likes})</button>`;
-    const favBtn = idx !== userIndex ? `<button class="fav-btn" data-index="${idx}">❤️ Ajouter aux favoris</button>` : '';
-    const msgBtn = idx !== userIndex ? `<button class="msg-btn" data-index="${idx}">Envoyer un message</button>` : '';
+  const favBtn = idx !== userIndex ? `<button class="fav-btn" data-index="${idx}" data-id="${p.id}">❤️ Ajouter aux favoris</button>` : '';
+  const msgBtn = idx !== userIndex ? `<button class="msg-btn" data-index="${idx}" data-id="${p.id}">Envoyer un message</button>` : '';
 
     const label = formatLastSeen(p.lastSeen);
     const online = label === 'En ligne maintenant';
@@ -192,7 +192,7 @@ function popupHtml(p, idx) {
 
     let messagesHtml = '';
     if (idx === userIndex) {
-        const msgs = loadMessages()[idx] || [];
+        const msgs = loadMessages()[p.id] || [];
         if (msgs.length) {
             messagesHtml = '<div class="messages">' + msgs.map(m => `<p>${escapeHtml(m)}</p>`).join('') + '</div>';
         }
@@ -311,10 +311,10 @@ async function initMap() {
         const favBtn = el.querySelector('.fav-btn');
         if (favBtn) {
             favBtn.addEventListener('click', () => {
-                const idx = parseInt(favBtn.dataset.index, 10);
+                const id = favBtn.dataset.id;
                 const favs = loadFavorites();
-                if (!favs.includes(idx)) {
-                    favs.push(idx);
+                if (!favs.includes(id)) {
+                    favs.push(id);
                     saveFavorites(favs);
                     favBtn.textContent = '❤️ Ajouté';
                 }
@@ -323,8 +323,8 @@ async function initMap() {
         const msgBtn = el.querySelector('.msg-btn');
         if (msgBtn) {
             msgBtn.addEventListener('click', () => {
-                const idx = parseInt(msgBtn.dataset.index, 10);
-                openMessageModal(idx);
+                const id = msgBtn.dataset.id;
+                openMessageModal(id);
             });
         }
     });
@@ -455,11 +455,11 @@ function displayRandomProfiles() {
     });
 }
 
-function openMessageModal(idx) {
+function openMessageModal(id) {
     const modal = document.getElementById('message-modal');
     if (!modal) return;
     if (!localStorage.getItem('birthDate')) {
-        localStorage.setItem('msgTargetIndex', idx);
+        localStorage.setItem('msgTargetId', id);
         window.location.href = 'age.html?redirect=map.html';
         return;
     }
@@ -471,8 +471,8 @@ function openMessageModal(idx) {
         const text = textarea.value.trim();
         if (text) {
             const msgs = loadMessages();
-            if (!msgs[idx]) msgs[idx] = [];
-            msgs[idx].push(escapeHtml(text));
+            if (!msgs[id]) msgs[id] = [];
+            msgs[id].push(escapeHtml(text));
             saveMessages(msgs);
         }
         modal.style.display = 'none';
@@ -485,8 +485,8 @@ function displayFavorites() {
     container.innerHTML = '';
     const favs = loadFavorites();
     const pins = getPins();
-    favs.forEach(idx => {
-        const p = pins[idx];
+    favs.forEach(id => {
+        const p = pins.find(pin => pin.id === id);
         if (!p) return;
         const div = document.createElement('div');
         div.className = 'profile-card';
@@ -506,7 +506,7 @@ function displayFavorites() {
         remove.textContent = 'Retirer';
         remove.className = 'button';
         remove.addEventListener('click', () => {
-            const list = loadFavorites().filter(i => i !== idx);
+            const list = loadFavorites().filter(i => i !== id);
             saveFavorites(list);
             displayFavorites();
         });
@@ -571,9 +571,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const pending = localStorage.getItem('msgTargetIndex');
-    if (pending !== null && localStorage.getItem('birthDate')) {
-        localStorage.removeItem('msgTargetIndex');
-        openMessageModal(parseInt(pending, 10));
+    const pending = localStorage.getItem('msgTargetId');
+    if (pending && localStorage.getItem('birthDate')) {
+        localStorage.removeItem('msgTargetId');
+        openMessageModal(pending);
     }
 });
