@@ -85,6 +85,8 @@ let markers = [];
 let mapPins = [];
 let userIndex = null;
 let mapInstance = null;
+let profileFormInitialized = false;
+let profilePhotoData = null;
 
 function pinFromDoc(doc) {
     const data = doc.data();
@@ -267,38 +269,45 @@ async function initProfileForm() {
     if (info.name) form.name.value = info.name;
     if (info.age) form.age.value = info.age;
     if (info.gender) form.gender.value = info.gender;
-    let photoData = info.photo || null;
+    profilePhotoData = info.photo || null;
     const photoInput = document.getElementById('photo');
     const photoPreview = document.getElementById('photo-preview');
-    if (photoPreview && photoData) {
-        photoPreview.src = photoData;
-        photoPreview.style.display = 'block';
+    if (photoPreview) {
+        if (profilePhotoData) {
+            photoPreview.src = profilePhotoData;
+            photoPreview.style.display = 'block';
+        } else {
+            photoPreview.style.display = 'none';
+        }
     }
-    if (photoInput) {
-        photoInput.addEventListener('change', e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                photoData = reader.result;
-                if (photoPreview) {
-                    photoPreview.src = photoData;
-                    photoPreview.style.display = 'block';
-                }
-            };
-            reader.readAsDataURL(file);
+    if (!profileFormInitialized) {
+        profileFormInitialized = true;
+        if (photoInput) {
+            photoInput.addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    profilePhotoData = reader.result;
+                    if (photoPreview) {
+                        photoPreview.src = profilePhotoData;
+                        photoPreview.style.display = 'block';
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            await saveUserInfo({
+                name: form.name.value,
+                age: form.age.value,
+                gender: form.gender.value,
+                photo: profilePhotoData
+            });
+            alert('Profil sauvegardé');
         });
     }
-    form.addEventListener('submit', async e => {
-        e.preventDefault();
-        await saveUserInfo({
-            name: form.name.value,
-            age: form.age.value,
-            gender: form.gender.value,
-            photo: photoData
-        });
-        alert('Profil sauvegardé');
-    });
 }
 
 async function initMap() {
