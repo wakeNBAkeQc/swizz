@@ -7,6 +7,15 @@ function loadUserInfo() {
 
 function saveUserInfo(info) {
     localStorage.setItem('userInfo', JSON.stringify(info));
+    const uid = firebase.auth().currentUser?.uid;
+    if (uid && window.db) {
+        db.collection('users').doc(uid).set({
+            nom: info.name,
+            age: parseInt(info.age, 10) || null,
+            genre: info.gender,
+            photoURL: info.photo || null
+        }, { merge: true });
+    }
     const index = localStorage.getItem('userPinIndex');
     if (index !== null) {
         const pins = getPins();
@@ -29,6 +38,26 @@ function getPins() {
 
 function savePins(pins) {
     localStorage.setItem('pins', JSON.stringify(pins));
+}
+
+async function syncUserInfoFromFirestore() {
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid || !window.db) return;
+    try {
+        const doc = await db.collection('users').doc(uid).get();
+        if (doc.exists) {
+            const data = doc.data();
+            const info = {
+                name: data.nom || '',
+                age: data.age || '',
+                gender: data.genre || '',
+                photo: data.photoURL || null
+            };
+            localStorage.setItem('userInfo', JSON.stringify(info));
+        }
+    } catch (_) {
+        // ignore errors
+    }
 }
 
 let userMarker = null;
@@ -290,6 +319,7 @@ async function initMap() {
         const info = loadUserInfo();
         if (!info.name || !info.age || !info.gender) {
             alert('Veuillez remplir votre nom, âge et genre dans le profil.');
+            window.location.href = 'profil.html';
             return;
         }
         const pinData = { id: uid, name: info.name, age: info.age, gender: info.gender, photo: info.photo, likes: 0 };
@@ -471,22 +501,22 @@ function applyFilters() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
+    await syncUserInfoFromFirestore();
     cleanupPins();
-    syncPinsFromFirestore().then(() => {
-        cleanupPins();
-        displayRandomProfiles();
-        displayFavorites();
-        const btnState = localStorage.getItem('userPinIndex') !== null ? 'block' : 'none';
-        const btn = document.getElementById('remove-pin');
-        if (btn) btn.style.display = btnState;
-    });
+    await syncPinsFromFirestore();
+    cleanupPins();
+    displayRandomProfiles();
+    displayFavorites();
+    const btnState = localStorage.getItem('userPinIndex') !== null ? 'block' : 'none';
+    const btn = document.getElementById('remove-pin');
+    if (btn) btn.style.display = btnState;
     initProfileForm();
     initAuthGuard(document.body.dataset.auth === 'required');
-    const btn = document.getElementById('remove-pin');
-    if (btn) {
-        btn.addEventListener('click', removeUserPin);
+    const removeBtn = document.getElementById('remove-pin');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', removeUserPin);
     }
     const logoutLink = document.getElementById('logout-link');
     if (logoutLink) {
