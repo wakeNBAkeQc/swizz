@@ -52,6 +52,7 @@
     initAuthGuard(true);
     // Initialize the profile form right away so any cached info
     // is displayed even if network requests fail
+    if (typeof loadUserProfile === 'function') loadUserProfile();
     if (typeof initProfileForm === 'function') initProfileForm();
 </script>
 </body>
