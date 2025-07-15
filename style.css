@@ -232,3 +232,23 @@ select {
         width: 90%;
     }
 }
+
+.profile-container {
+    background: linear-gradient(135deg, #ffe0f0, #e0e0ff);
+    padding: 2em;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+#profile-form input,
+#profile-form select {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#photo-preview {
+    margin-top: 1em;
+}
