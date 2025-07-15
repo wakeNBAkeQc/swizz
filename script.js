@@ -400,6 +400,12 @@ async function removeUserPin(e) {
     if (uid && window.db) {
         try {
             await db.collection('pins').doc(uid).delete();
+            const snap = await db.collection('pins').where('id', '==', uid).get();
+            const promises = [];
+            snap.forEach(doc => {
+                if (doc.id !== uid) promises.push(doc.ref.delete());
+            });
+            await Promise.all(promises);
         } catch (err) {
             alert('Impossible de supprimer le pin.');
             return;
