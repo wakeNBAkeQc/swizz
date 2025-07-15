@@ -9,7 +9,7 @@ function saveUserInfo(info) {
     localStorage.setItem('userInfo', JSON.stringify(info));
     const uid = firebase.auth().currentUser?.uid;
     if (uid && window.db) {
-        db.collection('users').doc(uid).set({
+        db.collection('profils').doc(uid).set({
             nom: info.name,
             age: parseInt(info.age, 10) || null,
             genre: info.gender,
@@ -45,7 +45,7 @@ async function syncUserInfoFromFirestore() {
     const uid = firebase.auth().currentUser?.uid;
     if (!uid || !window.db) return;
     try {
-        const doc = await db.collection('users').doc(uid).get();
+        const doc = await db.collection('profils').doc(uid).get();
         if (doc.exists) {
             const data = doc.data();
             const info = {
@@ -67,11 +67,27 @@ let mapPins = [];
 let userIndex = null;
 let mapInstance = null;
 
+function pinFromDoc(doc) {
+    const data = doc.data();
+    const snap = data.profilSnapshot || {};
+    return {
+        id: doc.id,
+        uid: data.uid || doc.id,
+        lat: data.lat,
+        lng: data.lng,
+        name: snap.nom || '',
+        age: snap.age || '',
+        gender: snap.genre || '',
+        photo: snap.photoURL || null,
+        lastSeen: data.timestamp || null
+    };
+}
+
 async function fetchFirestorePins() {
     if (!window.db) return [];
     try {
         const snap = await db.collection('pins').get();
-        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        return snap.docs.map(pinFromDoc);
     } catch (err) {
         console.error('Failed to fetch pins from Firestore:', err);
         return getPins();
@@ -82,7 +98,7 @@ async function syncPinsFromFirestore() {
     if (!window.db) return null;
     try {
         const snap = await db.collection('pins').get();
-        const pins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const pins = snap.docs.map(pinFromDoc);
         savePins(pins);
         mapPins = pins;
         const uid = firebase.auth().currentUser?.uid;
@@ -303,7 +319,20 @@ async function initMap() {
         savePins(pins);
         const uid = firebase.auth().currentUser?.uid;
         if (uid && window.db) {
-            db.collection('pins').doc(uid).set(pins[userIndex], { merge: true });
+            const p = pins[userIndex];
+            const snap = {
+                nom: p.name,
+                age: parseInt(p.age, 10) || null,
+                genre: p.gender,
+                photoURL: p.photo || null
+            };
+            db.collection('pins').doc(uid).set({
+                uid,
+                lat: p.lat,
+                lng: p.lng,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                profilSnapshot: snap
+            }, { merge: true });
         }
     }
 
@@ -368,6 +397,7 @@ async function initMap() {
             .openPopup();
         marker.once('add', () => { marker._icon.classList.add('marker-new'); });
         const fullPin = { lat: e.latlng.lat, lng: e.latlng.lng, ...pinData };
+        fullPin.lastSeen = Date.now();
         pins.push(fullPin);
         mapPins = pins;
         markers.push(marker);
@@ -377,7 +407,18 @@ async function initMap() {
         }
         if (uid && window.db) {
             try {
-                await db.collection('pins').doc(uid).set(fullPin);
+                await db.collection('pins').doc(uid).set({
+                    uid,
+                    lat: fullPin.lat,
+                    lng: fullPin.lng,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    profilSnapshot: {
+                        nom: info.name,
+                        age: parseInt(info.age, 10) || null,
+                        genre: info.gender,
+                        photoURL: info.photo || null
+                    }
+                });
             } catch (_) {}
         }
         userMarker = marker;

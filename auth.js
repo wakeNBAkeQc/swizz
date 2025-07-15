@@ -47,7 +47,7 @@ function register(e) {
     .then(cred => {
       return Promise.all([
         cred.user.updateProfile({ displayName: name }),
-        firebase.firestore().collection('users').doc(cred.user.uid).set({
+        firebase.firestore().collection('profils').doc(cred.user.uid).set({
           uid: cred.user.uid,
           nom: name,
           email: cred.user.email,
@@ -89,7 +89,7 @@ function loginGoogle() {
   firebase.auth().signInWithPopup(provider)
     .then(result => {
       const user = result.user;
-      return firebase.firestore().collection('users').doc(user.uid).set({
+      return firebase.firestore().collection('profils').doc(user.uid).set({
         uid: user.uid,
         nom: user.displayName || '',
         email: user.email,
