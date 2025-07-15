@@ -1,26 +1,42 @@
 
 
+const PROFILE_STORAGE_KEY = 'profilInfo';
+
 async function loadUserInfo() {
+    // Always attempt to read cached info first so the profile page retains
+    // the last values even when the user is logged out or offline.
+    const cached = localStorage.getItem(PROFILE_STORAGE_KEY);
+    const localInfo = cached ? JSON.parse(cached) : {};
+
     const uid = firebase.auth().currentUser?.uid;
-    if (!uid || !window.db) return {};
+    if (!uid || !window.db) return localInfo;
     try {
         const doc = await db.collection('profils').doc(uid).get();
         if (doc.exists) {
             const data = doc.data();
-            return {
+            const info = {
                 name: data.nom || '',
                 age: data.age || '',
                 gender: data.genre || '',
                 photo: data.photoURL || null
             };
+            // Update local cache so future loads work without Firestore.
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(info));
+            return info;
         }
     } catch (err) {
         console.error('loadUserInfo error:', err);
     }
-    return {};
+    return localInfo;
 }
 
 async function saveUserInfo(info) {
+    // Persist info locally so it is restored on next visit even before
+    // Firebase data loads.
+    try {
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(info));
+    } catch (_) {}
+
     const uid = firebase.auth().currentUser?.uid;
     if (uid && window.db) {
         try {
