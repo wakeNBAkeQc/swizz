@@ -25,6 +25,14 @@ function register(e) {
   const password = document.getElementById('password').value;
   const age = parseInt(document.getElementById('age').value, 10);
   const gender = document.getElementById('gender').value;
+  const policyAccepted = document.getElementById('policy-check')?.checked;
+  const policyErr = document.getElementById('policy-error');
+  if (policyErr) policyErr.style.display = 'none';
+  if (!policyAccepted) {
+    if (policyErr) policyErr.style.display = 'block';
+    else alert("Vous devez accepter la politique d'utilisation.");
+    return;
+  }
   if (age < 18) {
     alert('Vous devez avoir au moins 18 ans.');
     return;
