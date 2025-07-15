@@ -8,11 +8,6 @@
     <title>Accueil</title>
 
     <style>
-      body {
-        background: url("logozwizz.png") no-repeat center center fixed;
-        background-size: cover;
-      }
-
       .hero {
         width: 100%;
         max-height: 300px;
@@ -20,31 +15,14 @@
         border-radius: 10px;
       }
 
-      .button {
-        display: inline-block;
-        background: #007bff;
-        color: white;
-        padding: 1em 2em;
-        margin-top: 1em;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: bold;
-        transition: 0.3s ease;
-      }
-
-      .button:hover {
-        background: #0056b3;
-      }
-
       .profile-card {
         display: inline-block;
         margin: 10px;
         padding: 1em;
-        border: 1px solid #ccc;
+        border: 1px solid #444;
         border-radius: 10px;
         width: 150px;
         text-align: center;
-        background: #f9f9f9;
       }
 
       .popup-photo {
@@ -59,12 +37,12 @@
         height: 250px;
         width: 100%;
         margin-top: 1.5em;
-        border: 1px solid #ccc;
+        border: 1px solid #444;
         border-radius: 10px;
       }
 
       #cta {
-        background: #ffe9d5;
+        background: #1a1a1a;
         padding: 2em;
         text-align: center;
         margin-top: 2em;
@@ -72,13 +50,13 @@
       }
 
       .feature-box {
-        background: #f0f0f0;
+        background: #1a1a1a;
         padding: 1em;
         border-radius: 10px;
         width: 200px;
         text-align: center;
         font-weight: bold;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
       }
     </style>
 
@@ -105,7 +83,6 @@
         src="logozwizz.png"
         alt="Zwizz"
         class="logo"
-        style="height: 50px; margin-right: 10px"
       />
       <a href="accueil.html">Accueil</a>
       <a href="map.html">Carte</a>
@@ -192,7 +169,7 @@
 
       <section
         style="
-          background: linear-gradient(90deg, #ffe9d5, #ffd8cb);
+          background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
           padding: 2em;
           margin-top: 3em;
           border-radius: 12px;
