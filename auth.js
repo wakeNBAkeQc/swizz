@@ -6,15 +6,8 @@ function initAuthGuard(requireAuth = false) {
       }
       if (typeof syncUserInfoFromFirestore === 'function') {
         syncUserInfoFromFirestore()
- 70fgnv-codex/corrige-la-sauvegarde-de-l-image-de-profil
-          .catch(() => {})
-          .finally(() => {
-            if (typeof initProfileForm === 'function') initProfileForm();
-          });
-
           .then(() => { if (typeof initProfileForm === 'function') initProfileForm(); })
           .catch(() => {});
-        main
       } else if (typeof initProfileForm === 'function') {
         initProfileForm();
       }
