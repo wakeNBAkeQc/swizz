@@ -9,4 +9,5 @@ You can then start a local server with `npm start` and open `http://localhost:80
 
 ## Firebase configuration
 
-This project expects a `firebase-config.js` file containing your Firebase keys. A sample file named `firebase-config.sample.js` is provided. Copy it to `firebase-config.js` and fill in your own credentials. The resulting file is ignored by git to keep your keys private.
+The repository already includes a `firebase-config.js` file that contains the Firebase
+credentials used by the site, so no additional setup is required.
