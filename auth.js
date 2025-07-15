@@ -17,9 +17,15 @@ function initAuthGuard(requireAuth = false) {
     const loginLink = document.getElementById('login-link');
     const signupLink = document.getElementById('signup-link');
     const logoutLink = document.getElementById('logout-link');
+    const dLogin = document.getElementById('drawer-login');
+    const dSignup = document.getElementById('drawer-signup');
+    const dLogout = document.getElementById('drawer-logout');
     if (loginLink) loginLink.style.display = user ? 'none' : 'inline';
     if (signupLink) signupLink.style.display = user ? 'none' : 'inline';
     if (logoutLink) logoutLink.style.display = user ? 'inline' : 'none';
+    if (dLogin) dLogin.style.display = user ? 'none' : 'block';
+    if (dSignup) dSignup.style.display = user ? 'none' : 'block';
+    if (dLogout) dLogout.style.display = user ? 'block' : 'none';
     const page = location.pathname.split('/').pop();
     const authPages = ['login.html', 'signup.html'];
     if (!user && requireAuth) {

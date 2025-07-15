@@ -33,6 +33,22 @@ nav {
     z-index: 1000;
 }
 
+nav .menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5em;
+    cursor: pointer;
+    margin-right: 1em;
+}
+
+nav .nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
 .popup-photo {
     width: 80px;
     height: 80px;
@@ -274,21 +290,11 @@ select {
     body {
         font-size: 14px;
     }
-    nav a {
-        margin: 0 0.5em;
+    nav .menu-btn {
+        display: block;
     }
-    nav {
-        flex-direction: row;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        align-items: center;
-        white-space: nowrap;
-    }
-    nav::-webkit-scrollbar {
+    nav .nav-links {
         display: none;
-    }
-    nav a {
-        flex: 0 0 auto;
     }
     form {
         width: 90%;
@@ -397,3 +403,59 @@ select {
     padding: 0 1em;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
+
+/* Drawer styles */
+.drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+    z-index: 1999;
+}
+.drawer-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 80%;
+    max-width: 280px;
+    background: #1a1a1a;
+    padding: 1em;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.7);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+}
+.drawer.open {
+    transform: translateX(0);
+}
+
+.drawer a {
+    color: #fff;
+    margin: 0.5em 0;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.drawer-close {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5em;
+    margin-bottom: 0.5em;
+    cursor: pointer;
+}
+
