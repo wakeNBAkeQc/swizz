@@ -40,35 +40,6 @@ function savePins(pins) {
     localStorage.setItem('pins', JSON.stringify(pins));
 }
 
-async function saveUserPin(lat, lng) {
-    const user = firebase.auth().currentUser;
-    if (!user || !window.db) {
-        alert('Utilisateur non authentifié.');
-        return;
-    }
-    const info = loadUserInfo();
-    const pinData = {
-        uid: user.uid,
-        lat,
-        lng,
-        lastSeen: Date.now(),
-        gender: info.gender || '',
-        name: info.name || ''
-    };
-    try {
-        await db.collection('pins').doc(user.uid).set(pinData);
-        const pins = getPins().filter(p => p.id !== user.uid);
-        pins.push({ id: user.uid, ...pinData });
-        savePins(pins);
-        mapPins = pins;
-        const newIndex = pins.length - 1;
-        localStorage.setItem('userPinIndex', String(newIndex));
-        alert('Pin sauvegardé');
-    } catch (err) {
-        console.error('saveUserPin error:', err);
-        alert('Erreur lors de la sauvegarde du pin');
-    }
-}
 
 async function syncUserInfoFromFirestore() {
     const uid = firebase.auth().currentUser?.uid;
