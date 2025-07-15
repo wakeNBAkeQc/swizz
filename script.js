@@ -935,6 +935,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (form) form.style.display = 'none';
             if (noConvo) noConvo.style.display = 'block';
         }
+    }
 
     if (document.getElementById('messages-container')) {
         displayMessages();
