@@ -2,6 +2,12 @@ function initAuthGuard(requireAuth = false) {
   firebase.auth().onAuthStateChanged(user => {
     const span = document.getElementById('user-info');
     if (span) span.textContent = user ? (user.displayName || user.email) : '';
+    const loginLink = document.getElementById('login-link');
+    const signupLink = document.getElementById('signup-link');
+    const logoutLink = document.getElementById('logout-link');
+    if (loginLink) loginLink.style.display = user ? 'none' : 'inline';
+    if (signupLink) signupLink.style.display = user ? 'none' : 'inline';
+    if (logoutLink) logoutLink.style.display = user ? 'inline' : 'none';
     const page = location.pathname.split('/').pop();
     const authPages = ['login.html', 'signup.html'];
     if (!user && requireAuth) {
