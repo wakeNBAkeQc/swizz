@@ -418,25 +418,10 @@ async function initMap() {
         const el = e.popup.getElement();
         const likeBtn = el.querySelector('.like-btn');
         if (likeBtn) {
-            likeBtn.addEventListener('click', async () => {
+            likeBtn.addEventListener('click', () => {
                 const id = likeBtn.dataset.id;
-                const user = firebase.auth().currentUser;
-                if (!id || !user || !window.db) return;
-                const ref = db.collection('pins').doc(id);
-                const doc = await ref.get();
-                if (!doc.exists) return;
-                const data = doc.data();
-                const likedBy = Array.isArray(data.likedBy) ? data.likedBy : [];
-                if (likedBy.includes(user.uid)) return;
-                likedBy.push(user.uid);
-                await ref.set({ likedBy, likes: likedBy.length }, { merge: true });
-                await db.collection('profils').doc(id).set({ likes: likedBy.length }, { merge: true });
-                likeBtn.textContent = `Like (${likedBy.length})`;
                 const pinIdx = parseInt(likeBtn.dataset.index, 10);
-                if (!Number.isNaN(pinIdx) && mapPins[pinIdx]) {
-                    mapPins[pinIdx].likedBy = likedBy;
-                    mapPins[pinIdx].likes = likedBy.length;
-                }
+                likeProfile(id, likeBtn, pinIdx);
             });
         }
         const favBtn = el.querySelector('.fav-btn');
@@ -563,6 +548,29 @@ async function removeUserPin(e) {
     }
 }
 
+async function likeProfile(id, btn, pinIdx) {
+    const user = firebase.auth().currentUser;
+    if (!id || !user || !window.db) return;
+    try {
+        const ref = db.collection('pins').doc(id);
+        const doc = await ref.get();
+        if (!doc.exists) return;
+        const data = doc.data();
+        const likedBy = Array.isArray(data.likedBy) ? data.likedBy : [];
+        if (likedBy.includes(user.uid)) return;
+        likedBy.push(user.uid);
+        await ref.set({ likedBy, likes: likedBy.length }, { merge: true });
+        await db.collection('profils').doc(id).set({ likes: likedBy.length }, { merge: true });
+        if (btn) btn.textContent = `Like (${likedBy.length})`;
+        if (pinIdx !== null && !Number.isNaN(pinIdx) && mapPins[pinIdx]) {
+            mapPins[pinIdx].likedBy = likedBy;
+            mapPins[pinIdx].likes = likedBy.length;
+        }
+    } catch (err) {
+        console.error('likeProfile error:', err);
+    }
+}
+
 async function displayRandomProfiles() {
     const container = document.getElementById('profiles');
     if (!container) return;
@@ -594,6 +602,11 @@ async function displayRandomProfiles() {
         const likeCount = Array.isArray(p.likedBy) ? p.likedBy.length : (p.likes || 0);
         likes.textContent = `Likes: ${likeCount}`;
         div.appendChild(likes);
+        const btn = document.createElement('button');
+        btn.className = 'like-btn';
+        btn.textContent = `Like (${likeCount})`;
+        btn.addEventListener('click', () => likeProfile(p.id, btn));
+        div.appendChild(btn);
         container.appendChild(div);
     });
 }
@@ -641,6 +654,11 @@ async function displayFavorites() {
         const likeCount = Array.isArray(p.likedBy) ? p.likedBy.length : (p.likes || 0);
         likes.textContent = `Likes: ${likeCount}`;
         div.appendChild(likes);
+        const likeBtn = document.createElement('button');
+        likeBtn.className = 'like-btn';
+        likeBtn.textContent = `Like (${likeCount})`;
+        likeBtn.addEventListener('click', () => likeProfile(id, likeBtn));
+        div.appendChild(likeBtn);
         const remove = document.createElement('button');
         remove.textContent = 'Retirer';
         remove.className = 'button';
