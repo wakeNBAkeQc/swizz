@@ -221,6 +221,21 @@ select {
     margin-bottom: 0.3em;
 }
 
+.signup-box {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 1em;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 1000;
+    text-align: center;
+}
+.signup-box a {
+    margin: 0 0.5em;
+}
+
 @media (max-width: 600px) {
     body {
         font-size: 14px;
