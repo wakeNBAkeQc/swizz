@@ -37,20 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!dobStr) return;
     const age = calculateAge(new Date(dobStr));
     const policyAccepted = document.getElementById('policy-check')?.checked;
-    const signupDob = localStorage.getItem('signupBirthDate');
     const ageErr = document.getElementById('age-error');
     const policyErr = document.getElementById('policy-error');
     const dobErr = document.getElementById('dob-error');
     if (ageErr) ageErr.style.display = 'none';
     if (policyErr) policyErr.style.display = 'none';
     if (dobErr) dobErr.style.display = 'none';
-    if (signupDob && signupDob !== dobStr) {
-      if (dobErr) dobErr.style.display = 'block';
-      return;
-    }
     if (age >= 18 && policyAccepted) {
-      localStorage.setItem('ageVerified', 'true');
-      localStorage.setItem('birthDate', dobStr);
       const params = new URLSearchParams(location.search);
       const target = params.get('redirect') || 'accueil.html';
       window.location.href = target;

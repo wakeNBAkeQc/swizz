@@ -1,64 +1,67 @@
 
 
-function loadUserInfo() {
-    const data = localStorage.getItem('userInfo');
-    return data ? JSON.parse(data) : {};
-}
-
-function saveUserInfo(info) {
-    localStorage.setItem('userInfo', JSON.stringify(info));
+async function loadUserInfo() {
     const uid = firebase.auth().currentUser?.uid;
-    if (uid && window.db) {
-        db.collection('profils').doc(uid).set({
-            nom: info.name,
-            age: parseInt(info.age, 10) || null,
-            genre: info.gender,
-            photoURL: info.photo || null
-        }, { merge: true });
-    }
-    const index = localStorage.getItem('userPinIndex');
-    if (index !== null) {
-        const pins = getPins();
-        if (pins[index]) {
-            pins[index].name = info.name;
-            pins[index].age = info.age;
-            pins[index].gender = info.gender;
-            pins[index].photo = info.photo;
-            savePins(pins);
-            if (userMarker) {
-                userMarker.setPopupContent(popupHtml(pins[index], parseInt(index, 10)));
-            }
-        }
-    }
-}
-
-function getPins() {
-    return JSON.parse(localStorage.getItem('pins') || '[]');
-}
-
-function savePins(pins) {
-    localStorage.setItem('pins', JSON.stringify(pins));
-}
-
-
-async function syncUserInfoFromFirestore() {
-    const uid = firebase.auth().currentUser?.uid;
-    if (!uid || !window.db) return;
+    if (!uid || !window.db) return {};
     try {
         const doc = await db.collection('profils').doc(uid).get();
         if (doc.exists) {
             const data = doc.data();
-            const info = {
+            return {
                 name: data.nom || '',
                 age: data.age || '',
                 gender: data.genre || '',
                 photo: data.photoURL || null
             };
-            localStorage.setItem('userInfo', JSON.stringify(info));
         }
-    } catch (_) {
-        // ignore errors
+    } catch (err) {
+        console.error('loadUserInfo error:', err);
     }
+    return {};
+}
+
+async function saveUserInfo(info) {
+    const uid = firebase.auth().currentUser?.uid;
+    if (uid && window.db) {
+        try {
+            await db.collection('profils').doc(uid).set({
+                nom: info.name,
+                age: parseInt(info.age, 10) || null,
+                genre: info.gender,
+                photoURL: info.photo || null
+            }, { merge: true });
+        } catch (err) {
+            console.error('saveUserInfo error:', err);
+        }
+    }
+    if (userMarker && userIndex !== null && mapPins[userIndex]) {
+        const p = mapPins[userIndex];
+        p.name = info.name;
+        p.age = info.age;
+        p.gender = info.gender;
+        p.photo = info.photo;
+        userMarker.setPopupContent(popupHtml(p, userIndex));
+    }
+}
+
+async function getPins() {
+    if (!window.db) return [];
+    try {
+        const snap = await db.collection('pins').get();
+        return snap.docs.map(pinFromDoc);
+    } catch (err) {
+        console.error('getPins error:', err);
+        return [];
+    }
+}
+
+function savePins() {
+    // pins are stored directly in Firestore; no-op
+}
+
+
+async function syncUserInfoFromFirestore() {
+    return loadUserInfo();
 }
 
 let userMarker = null;
@@ -90,7 +93,7 @@ async function fetchFirestorePins() {
         return snap.docs.map(pinFromDoc);
     } catch (err) {
         console.error('Failed to fetch pins from Firestore:', err);
-        return getPins();
+        return [];
     }
 }
 
@@ -99,44 +102,9 @@ async function syncPinsFromFirestore() {
     try {
         const snap = await db.collection('pins').get();
         const remotePins = snap.docs.map(pinFromDoc);
-        const uid = firebase.auth().currentUser?.uid;
-        const localPins = getPins();
-
-        if (uid) {
-            const remoteIdx = remotePins.findIndex(p => p.id === uid);
-            const localIdx = localPins.findIndex(p => p.id === uid);
-            if (localIdx >= 0 && remoteIdx === -1) {
-                const p = localPins[localIdx];
-                try {
-                    await db.collection('pins').doc(uid).set({
-                        uid,
-                        lat: p.lat,
-                        lng: p.lng,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        profilSnapshot: {
-                            nom: p.name,
-                            age: parseInt(p.age, 10) || null,
-                            genre: p.gender,
-                            photoURL: p.photo || null
-                        }
-                    });
-                    remotePins.push({ ...p, id: uid });
-                } catch (_) {}
-            } else if (localIdx === -1 && remoteIdx >= 0) {
-                localPins.push(remotePins[remoteIdx]);
-            }
-        }
-
-        savePins(remotePins);
         mapPins = remotePins;
-        if (uid) {
-            const idx = remotePins.findIndex(p => p.id === uid);
-            if (idx >= 0) {
-                localStorage.setItem('userPinIndex', String(idx));
-            } else {
-                localStorage.removeItem('userPinIndex');
-            }
-        }
+        const uid = firebase.auth().currentUser?.uid;
+        userIndex = uid ? remotePins.findIndex(p => p.id === uid) : null;
         return remotePins;
     } catch (err) {
         console.error('syncPinsFromFirestore error:', err);
@@ -144,20 +112,48 @@ async function syncPinsFromFirestore() {
     }
 }
 
-function loadFavorites() {
-    return JSON.parse(localStorage.getItem('favPins') || '[]');
+async function loadFavorites() {
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid || !window.db) return [];
+    try {
+        const doc = await db.collection('profils').doc(uid).get();
+        return doc.exists && Array.isArray(doc.data().favPins) ? doc.data().favPins : [];
+    } catch (err) {
+        console.error('loadFavorites error:', err);
+        return [];
+    }
 }
 
-function saveFavorites(favs) {
-    localStorage.setItem('favPins', JSON.stringify(favs));
+async function saveFavorites(favs) {
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid || !window.db) return;
+    try {
+        await db.collection('profils').doc(uid).set({ favPins: favs }, { merge: true });
+    } catch (err) {
+        console.error('saveFavorites error:', err);
+    }
 }
 
-function loadMessages() {
-    return JSON.parse(localStorage.getItem('messages') || '{}');
+async function loadMessages() {
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid || !window.db) return {};
+    try {
+        const doc = await db.collection('profils').doc(uid).get();
+        return doc.exists && doc.data().messages ? doc.data().messages : {};
+    } catch (err) {
+        console.error('loadMessages error:', err);
+        return {};
+    }
 }
 
-function saveMessages(msgs) {
-    localStorage.setItem('messages', JSON.stringify(msgs));
+async function saveMessages(msgs) {
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid || !window.db) return;
+    try {
+        await db.collection('profils').doc(uid).set({ messages: msgs }, { merge: true });
+    } catch (err) {
+        console.error('saveMessages error:', err);
+    }
 }
 
 function escapeHtml(str) {
@@ -174,34 +170,27 @@ function logoutUser() {
     if (window.firebase?.auth) {
         firebase.auth().signOut().catch(() => {});
     }
-    localStorage.removeItem('ageVerified');
-    localStorage.removeItem('birthDate');
-    // Do not clear userInfo, pins or userPinIndex so profile details and
-    // markers remain after logout
+    // Do not clear user data so profile details and markers remain after logout
     window.location.href = 'login.html';
 }
 
 async function cleanupPins() {
-    const pins = getPins();
     const uid = firebase.auth().currentUser?.uid;
-    if (!uid) return;
+    if (!uid || !window.db) return;
+    const pins = mapPins.length ? mapPins : await getPins();
     const idx = pins.findIndex(p => p.id === uid);
-    if (idx >= 0) {
-        localStorage.setItem('userPinIndex', String(idx));
-    } else {
-        localStorage.removeItem('userPinIndex');
-        if (window.db) {
-            try {
-                await db.collection('pins').doc(uid).delete();
-                const snap = await db.collection('pins').where('uid', '==', uid).get();
-                const promises = [];
-                snap.forEach(doc => {
-                    if (doc.id !== uid) promises.push(doc.ref.delete());
-                });
-                await Promise.all(promises);
-            } catch (_) {
-                // ignore cleanup errors
-            }
+    userIndex = idx >= 0 ? idx : null;
+    if (idx === -1) {
+        try {
+            await db.collection('pins').doc(uid).delete();
+            const snap = await db.collection('pins').where('uid', '==', uid).get();
+            const promises = [];
+            snap.forEach(doc => {
+                if (doc.id !== uid) promises.push(doc.ref.delete());
+            });
+            await Promise.all(promises);
+        } catch (_) {
+            // ignore cleanup errors
         }
     }
 }
@@ -255,10 +244,10 @@ function popupHtml(p, idx) {
     return `${img}<p><strong>${name}</strong><br>${age} ans – ${gender}</p>${status}${likeBtn}${favBtn}${msgBtn}${removeBtn}${messagesHtml}`;
 }
 
-function initProfileForm() {
+async function initProfileForm() {
     const form = document.getElementById('profile-form');
     if (!form) return;
-    const info = loadUserInfo();
+    const info = await loadUserInfo();
     if (info.name) form.name.value = info.name;
     if (info.age) form.age.value = info.age;
     if (info.gender) form.gender.value = info.gender;
@@ -284,9 +273,9 @@ function initProfileForm() {
             reader.readAsDataURL(file);
         });
     }
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
         e.preventDefault();
-        saveUserInfo({
+        await saveUserInfo({
             name: form.name.value,
             age: form.age.value,
             gender: form.gender.value,
@@ -303,13 +292,6 @@ async function initMap() {
         await cleanupPins();
     }
 
-    // Listen for storage changes from other tabs to keep state in sync
-    window.addEventListener('storage', async e => {
-        if (e.key === 'pins' || e.key === 'userPinIndex') {
-            await cleanupPins();
-            location.reload();
-        }
-    });
 
     const mapEl = document.getElementById('map');
     if (!mapEl) return;
@@ -321,9 +303,10 @@ async function initMap() {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const pins = getPins();
+    const pins = await getPins();
     mapPins = pins;
-    userIndex = parseInt(localStorage.getItem('userPinIndex'), 10);
+    const uid = firebase.auth().currentUser?.uid;
+    userIndex = uid ? pins.findIndex(p => p.id === uid) : null;
     markers = [];
     pins.forEach((p, idx) => {
         const marker = L.marker([p.lat, p.lng], {riseOnHover: true}).addTo(map)
@@ -366,22 +349,24 @@ async function initMap() {
         const el = e.popup.getElement();
         const likeBtn = el.querySelector('.like-btn');
         if (likeBtn) {
-            likeBtn.addEventListener('click', () => {
+            likeBtn.addEventListener('click', async () => {
                 const idx = parseInt(likeBtn.dataset.index, 10);
-                const list = getPins();
-                list[idx].likes = (list[idx].likes || 0) + 1;
-                savePins(list);
-                likeBtn.textContent = `Like (${list[idx].likes})`;
+                const list = await getPins();
+                const pin = list[idx];
+                if (!pin) return;
+                pin.likes = (pin.likes || 0) + 1;
+                likeBtn.textContent = `Like (${pin.likes})`;
+                await db.collection('pins').doc(pin.id).set({ likes: pin.likes }, { merge: true });
             });
         }
         const favBtn = el.querySelector('.fav-btn');
         if (favBtn) {
-            favBtn.addEventListener('click', () => {
+            favBtn.addEventListener('click', async () => {
                 const id = favBtn.dataset.id;
-                const favs = loadFavorites();
+                const favs = await loadFavorites();
                 if (!favs.includes(id)) {
                     favs.push(id);
-                    saveFavorites(favs);
+                    await saveFavorites(favs);
                     favBtn.textContent = '❤️ Ajouté';
                 }
             });
@@ -411,7 +396,7 @@ async function initMap() {
             alert('Vous avez déjà ajouté un pin.');
             return;
         }
-        const info = loadUserInfo();
+        const info = await loadUserInfo();
         if (!info.name || !info.age || !info.gender) {
             alert('Veuillez remplir votre nom, âge et genre dans le profil.');
             window.location.href = 'profil.html';
@@ -427,10 +412,6 @@ async function initMap() {
         pins.push(fullPin);
         mapPins = pins;
         markers.push(marker);
-        savePins(pins);
-        if (uid) {
-            localStorage.setItem('userPinIndex', String(pins.length - 1));
-        }
         if (uid && window.db) {
             try {
                 await db.collection('pins').doc(uid).set({
@@ -479,10 +460,9 @@ async function removeUserPin(e) {
     try {
         await db.collection('pins').doc(uid).delete();
         const idx = mapPins.findIndex(p => p.id === uid);
-        const pins = getPins().filter(p => p.id !== uid);
-        savePins(pins);
+        const pins = (await getPins()).filter(p => p.id !== uid);
         mapPins = pins;
-        localStorage.removeItem('userPinIndex');
+        userIndex = null;
         if (idx >= 0) {
             markers[idx].remove();
             markers.splice(idx, 1);
@@ -499,11 +479,11 @@ async function removeUserPin(e) {
     }
 }
 
-function displayRandomProfiles() {
+async function displayRandomProfiles() {
     const container = document.getElementById('profiles');
     if (!container) return;
 
-    const pins = getPins();
+    const pins = await getPins();
     if (pins.length === 0) {
         container.textContent = 'Aucun profil enregistré.';
         return;
@@ -536,33 +516,28 @@ function displayRandomProfiles() {
 function openMessageModal(id) {
     const modal = document.getElementById('message-modal');
     if (!modal) return;
-    if (!localStorage.getItem('birthDate')) {
-        localStorage.setItem('msgTargetId', id);
-        window.location.href = 'age.html?redirect=map.html';
-        return;
-    }
     modal.style.display = 'block';
     const textarea = modal.querySelector('textarea');
     const sendBtn = modal.querySelector('button');
     textarea.value = '';
-    sendBtn.onclick = () => {
+    sendBtn.onclick = async () => {
         const text = textarea.value.trim();
         if (text) {
-            const msgs = loadMessages();
+            const msgs = await loadMessages();
             if (!msgs[id]) msgs[id] = [];
             msgs[id].push(escapeHtml(text));
-            saveMessages(msgs);
+            await saveMessages(msgs);
         }
         modal.style.display = 'none';
     };
 }
 
-function displayFavorites() {
+async function displayFavorites() {
     const container = document.getElementById('fav-list');
     if (!container) return;
     container.innerHTML = '';
-    const favs = loadFavorites();
-    const pins = getPins();
+    const favs = await loadFavorites();
+    const pins = await getPins();
     favs.forEach(id => {
         const p = pins.find(pin => pin.id === id);
         if (!p) return;
@@ -583,9 +558,9 @@ function displayFavorites() {
         const remove = document.createElement('button');
         remove.textContent = 'Retirer';
         remove.className = 'button';
-        remove.addEventListener('click', () => {
-            const list = loadFavorites().filter(i => i !== id);
-            saveFavorites(list);
+        remove.addEventListener('click', async () => {
+            const list = (await loadFavorites()).filter(i => i !== id);
+            await saveFavorites(list);
             displayFavorites();
         });
         div.appendChild(remove);
@@ -621,9 +596,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     displayRandomProfiles();
     displayFavorites();
-    const btnState = localStorage.getItem('userPinIndex') !== null ? 'block' : 'none';
     const btn = document.getElementById('remove-pin');
-    if (btn) btn.style.display = btnState;
+    if (btn) btn.style.display = userIndex !== null ? 'block' : 'none';
     initProfileForm();
     initAuthGuard(document.body.dataset.auth === 'required');
     const removeBtn = document.getElementById('remove-pin');
@@ -650,9 +624,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const pending = localStorage.getItem('msgTargetId');
-    if (pending && localStorage.getItem('birthDate')) {
-        localStorage.removeItem('msgTargetId');
-        openMessageModal(pending);
-    }
 });
