@@ -47,6 +47,23 @@ async function saveUserInfo(info) {
                 photo: info.photo || null,
                 photoURL: info.photo || null
             }, { merge: true });
+
+            // Update existing pin with new profile details if the user
+            // already has one in Firestore. This keeps the popup info in
+            // sync for everyone viewing the map.
+            const pinRef = db.collection('pins').doc(uid);
+            const pinSnap = await pinRef.get();
+            if (pinSnap.exists) {
+                await pinRef.set({
+                    profilSnapshot: {
+                        nom: info.name,
+                        age: parseInt(info.age, 10) || null,
+                        genre: info.gender,
+                        photo: info.photo || null,
+                        photoURL: info.photo || null
+                    }
+                }, { merge: true });
+            }
         } catch (err) {
             console.error('saveUserInfo error:', err);
         }
