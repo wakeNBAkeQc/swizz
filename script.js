@@ -696,34 +696,55 @@ async function sendInitialMessage(otherId, text) {
     if (!sanitized) return;
     const convoId = [user.uid, otherId].sort().join('_');
     const convoRef = db.collection('conversations').doc(convoId);
-    const convoDoc = await convoRef.get();
-    if (!convoDoc.exists) {
-        const [selfDoc, targetDoc] = await Promise.all([
-            db.collection('profils').doc(user.uid).get(),
-            db.collection('profils').doc(otherId).get()
-        ]);
-        const selfInfo = selfDoc.exists ? selfDoc.data() : {};
-        const targetInfo = targetDoc.exists ? targetDoc.data() : {};
-        await convoRef.set({
-            participants: [user.uid, otherId],
-            users: {
-                [user.uid]: { name: selfInfo.nom || user.displayName || '', photo: selfInfo.photo || selfInfo.photoURL || null },
-                [otherId]: { name: targetInfo.nom || '', photo: targetInfo.photo || targetInfo.photoURL || null }
-            },
-            lastMessage: sanitized,
+
+    try {
+        const convoDoc = await convoRef.get();
+        if (!convoDoc.exists) {
+            const [selfDoc, targetDoc] = await Promise.all([
+                db.collection('profils').doc(user.uid).get(),
+                db.collection('profils').doc(otherId).get()
+            ]);
+            const selfInfo = selfDoc.exists ? selfDoc.data() : {};
+            const targetInfo = targetDoc.exists ? targetDoc.data() : {};
+            await convoRef.set({
+                participants: [user.uid, otherId],
+                users: {
+                    [user.uid]: { name: selfInfo.nom || user.displayName || '', photo: selfInfo.photo || selfInfo.photoURL || null },
+                    [otherId]: { name: targetInfo.nom || '', photo: targetInfo.photo || targetInfo.photoURL || null }
+                },
+                lastMessage: sanitized,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } else {
+            await convoRef.set({
+                lastMessage: sanitized,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        }
+
+        await convoRef.collection('messages').add({
+            from: user.uid,
+            text: sanitized,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-    } else {
-        await convoRef.set({
-            lastMessage: sanitized,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+    } catch (err) {
+        console.error('sendInitialMessage conversation failed:', err);
+        // If the conversation write fails (likely due to security rules),
+        // fallback to legacy per-profile storage so at least the message is saved.
+        try {
+            await sendMessage(otherId, sanitized);
+        } catch (err2) {
+            console.error('sendMessage (legacy storage) failed:', err2);
+            throw err2; // propagate so caller can show an error
+        }
+        const modal = document.getElementById('message-modal');
+        const overlay = document.getElementById('message-overlay');
+        if (modal) modal.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
+        pendingMessageTarget = null;
+        return;
     }
-    await convoRef.collection('messages').add({
-        from: user.uid,
-        text: sanitized,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
+
     // Also store the message in each user's profile document so it appears
     // in their message lists if that feature is used elsewhere in the site.
     try {
@@ -731,6 +752,7 @@ async function sendInitialMessage(otherId, text) {
     } catch (err) {
         console.error('sendMessage (legacy storage) failed:', err);
     }
+
     const modal = document.getElementById('message-modal');
     const overlay = document.getElementById('message-overlay');
     if (modal) modal.style.display = 'none';
@@ -1046,7 +1068,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const input = document.getElementById('message-modal-text');
             const text = input ? input.value : '';
             if (text && pendingMessageTarget) {
-                await sendInitialMessage(pendingMessageTarget, text);
+                try {
+                    await sendInitialMessage(pendingMessageTarget, text);
+                } catch (err) {
+                    console.error('sendInitialMessage error:', err);
+                    alert("Impossible d'envoyer le message.");
+                }
                 pendingMessageTarget = null;
             }
         });
