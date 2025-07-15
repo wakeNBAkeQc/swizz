@@ -92,6 +92,7 @@ let profilePhotoData = null;
 function pinFromDoc(doc) {
     const data = doc.data();
     const snap = data.profilSnapshot || {};
+    const likedBy = Array.isArray(data.likedBy) ? data.likedBy : [];
     return {
         id: doc.id,
         uid: data.uid || doc.id,
@@ -101,7 +102,9 @@ function pinFromDoc(doc) {
         age: snap.age || '',
         gender: snap.genre || '',
         photo: snap.photo || snap.photoURL || null,
-        lastSeen: data.timestamp || null
+        lastSeen: data.timestamp || null,
+        likedBy,
+        likes: likedBy.length || data.likes || 0
     };
 }
 
@@ -239,8 +242,8 @@ function formatLastSeen(lastSeen) {
 
 function popupHtml(p, idx) {
     const img = p.photo ? `<img src="${p.photo}" class="popup-photo">` : '';
-    const likes = p.likes || 0;
-    const likeBtn = `<button class="like-btn" data-index="${idx}">Like (${likes})</button>`;
+    const likes = Array.isArray(p.likedBy) ? p.likedBy.length : (p.likes || 0);
+    const likeBtn = `<button class="like-btn" data-index="${idx}" data-id="${p.id}">Like (${likes})</button>`;
     const favBtn = idx !== userIndex ? `<button class="fav-btn" data-index="${idx}" data-id="${p.id}">❤️ Ajouter aux favoris</button>` : '';
     const msgBtn = idx !== userIndex ? `<button class="msg-btn" data-index="${idx}" data-id="${p.id}">Envoyer un message</button>` : '';
     const removeBtn = idx === userIndex ? `<button class="button remove-pin-btn">Supprimer ce pin</button>` : '';
@@ -401,7 +404,8 @@ async function initMap() {
                 lat: p.lat,
                 lng: p.lng,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                profilSnapshot: snap
+                profilSnapshot: snap,
+                likedBy: Array.isArray(p.likedBy) ? p.likedBy : []
             }, { merge: true });
         }
     }
@@ -411,13 +415,23 @@ async function initMap() {
         const likeBtn = el.querySelector('.like-btn');
         if (likeBtn) {
             likeBtn.addEventListener('click', async () => {
-                const idx = parseInt(likeBtn.dataset.index, 10);
-                const list = await getPins();
-                const pin = list[idx];
-                if (!pin) return;
-                pin.likes = (pin.likes || 0) + 1;
-                likeBtn.textContent = `Like (${pin.likes})`;
-                await db.collection('pins').doc(pin.id).set({ likes: pin.likes }, { merge: true });
+                const id = likeBtn.dataset.id;
+                const user = firebase.auth().currentUser;
+                if (!id || !user || !window.db) return;
+                const ref = db.collection('pins').doc(id);
+                const doc = await ref.get();
+                if (!doc.exists) return;
+                const data = doc.data();
+                const likedBy = Array.isArray(data.likedBy) ? data.likedBy : [];
+                if (likedBy.includes(user.uid)) return;
+                likedBy.push(user.uid);
+                await ref.set({ likedBy }, { merge: true });
+                likeBtn.textContent = `Like (${likedBy.length})`;
+                const pinIdx = parseInt(likeBtn.dataset.index, 10);
+                if (!Number.isNaN(pinIdx) && mapPins[pinIdx]) {
+                    mapPins[pinIdx].likedBy = likedBy;
+                    mapPins[pinIdx].likes = likedBy.length;
+                }
             });
         }
         const favBtn = el.querySelector('.fav-btn');
@@ -463,7 +477,7 @@ async function initMap() {
             window.location.href = 'profil.html';
             return;
         }
-        const pinData = { id: uid, name: info.name, age: info.age, gender: info.gender, photo: info.photo, likes: 0 };
+        const pinData = { id: uid, name: info.name, age: info.age, gender: info.gender, photo: info.photo, likes: 0, likedBy: [] };
         const marker = L.marker(e.latlng, {riseOnHover:true}).addTo(map)
             .bindPopup(popupHtml(pinData, pins.length))
             .openPopup();
@@ -486,7 +500,8 @@ async function initMap() {
                         genre: info.gender,
                         photo: info.photo || null,
                         photoURL: info.photo || null
-                    }
+                    },
+                    likedBy: []
                 });
             } catch (_) {}
         }
@@ -569,7 +584,8 @@ async function displayRandomProfiles() {
         info.textContent = `${p.name} - ${p.age} ans – ${p.gender}`;
         div.appendChild(info);
         const likes = document.createElement('span');
-        likes.textContent = `Likes: ${p.likes || 0}`;
+        const likeCount = Array.isArray(p.likedBy) ? p.likedBy.length : (p.likes || 0);
+        likes.textContent = `Likes: ${likeCount}`;
         div.appendChild(likes);
         container.appendChild(div);
     });
@@ -615,7 +631,8 @@ async function displayFavorites() {
         info.textContent = `${p.name} - ${p.age} ans – ${p.gender}`;
         div.appendChild(info);
         const likes = document.createElement('span');
-        likes.textContent = `Likes: ${p.likes || 0}`;
+        const likeCount = Array.isArray(p.likedBy) ? p.likedBy.length : (p.likes || 0);
+        likes.textContent = `Likes: ${likeCount}`;
         div.appendChild(likes);
         const remove = document.createElement('button');
         remove.textContent = 'Retirer';
@@ -628,6 +645,31 @@ async function displayFavorites() {
         div.appendChild(remove);
         container.appendChild(div);
     });
+}
+
+async function displayReceivedLikes() {
+    const list = document.getElementById('like-list');
+    if (!list) return;
+    list.innerHTML = '';
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid || !window.db) return;
+    try {
+        const doc = await db.collection('pins').doc(uid).get();
+        const likedBy = doc.exists && Array.isArray(doc.data().likedBy) ? doc.data().likedBy : [];
+        if (likedBy.length === 0) {
+            list.textContent = 'Aucun like reçu.';
+            return;
+        }
+        const names = await Promise.all(likedBy.map(id => db.collection('profils').doc(id).get().then(d => d.exists ? (d.data().nom || '') : '')));
+        names.forEach(n => {
+            const li = document.createElement('li');
+            li.textContent = n;
+            list.appendChild(li);
+        });
+    } catch (err) {
+        console.error('displayReceivedLikes error:', err);
+        list.textContent = 'Erreur lors du chargement des likes.';
+    }
 }
 
 function applyFilters() {
@@ -658,6 +700,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     displayRandomProfiles();
     displayFavorites();
+    displayReceivedLikes();
     const btn = document.getElementById('remove-pin');
     if (btn) btn.style.display = userIndex !== null ? 'block' : 'none';
     initProfileForm();
