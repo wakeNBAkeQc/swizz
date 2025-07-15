@@ -24,15 +24,20 @@
     <span id="user-info"></span>
 </nav>
 <main id="conversation">
-    <div id="conversation-header">
-        <img id="convo-photo" class="popup-photo" style="display:none;">
-        <h1 id="convo-name"></h1>
+    <div id="no-conversation" style="display:none;">
+        <p>Aucune conversation sélectionnée.</p>
     </div>
-    <div id="conversation-messages"></div>
-    <form id="send-form">
-        <input id="message-input" type="text" placeholder="Écrire un message" autocomplete="off">
-        <button type="submit">Envoyer</button>
-    </form>
+    <div id="conversation-area" style="display:none;">
+        <div id="conversation-header">
+            <img id="convo-photo" class="popup-photo" style="display:none;">
+            <h1 id="convo-name"></h1>
+        </div>
+        <div id="conversation-messages"></div>
+        <form id="send-form" style="display:none;">
+            <input id="message-input" type="text" placeholder="Écrire un message" autocomplete="off">
+            <button type="submit">Envoyer</button>
+        </form>
+    </div>
 </main>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>

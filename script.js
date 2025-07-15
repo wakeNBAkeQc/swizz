@@ -656,6 +656,13 @@ async function displayConversation(otherId) {
     const convoId = [user.uid, otherId].sort().join('_');
     const convoRef = db.collection('conversations').doc(convoId);
 
+    const area = document.getElementById('conversation-area');
+    const noConvo = document.getElementById('no-conversation');
+    if (area) area.style.display = 'block';
+    if (noConvo) noConvo.style.display = 'none';
+    const sendForm = document.getElementById('send-form');
+    if (sendForm) sendForm.style.display = 'flex';
+
     const headerName = document.getElementById('convo-name');
     const headerPhoto = document.getElementById('convo-photo');
     const messagesEl = document.getElementById('conversation-messages');
@@ -888,7 +895,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const convoEl = document.getElementById('conversation-messages');
     if (convoEl) {
         const uid = getQueryParam('uid');
-        if (uid) displayConversation(uid);
+        if (uid) {
+            displayConversation(uid);
+        } else {
+            const area = document.getElementById('conversation-area');
+            const noConvo = document.getElementById('no-conversation');
+            const form = document.getElementById('send-form');
+            if (area) area.style.display = 'none';
+            if (form) form.style.display = 'none';
+            if (noConvo) noConvo.style.display = 'block';
+        }
     } else if (document.getElementById('messages-container')) {
         displayMessages();
     }
