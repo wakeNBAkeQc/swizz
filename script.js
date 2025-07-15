@@ -905,8 +905,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (form) form.style.display = 'none';
             if (noConvo) noConvo.style.display = 'block';
         }
-    } else if (document.getElementById('messages-container')) {
+
+    if (document.getElementById('messages-container')) {
         displayMessages();
+    }
+
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    const openBtn = document.getElementById('menu-btn');
+    const closeBtn = document.getElementById('drawer-close');
+    const drawerLogin = document.getElementById('drawer-login');
+    const drawerSignup = document.getElementById('drawer-signup');
+    const drawerLogout = document.getElementById('drawer-logout');
+    if (drawer && overlay && openBtn && closeBtn) {
+        const closeDrawer = () => {
+            drawer.classList.remove('open');
+            overlay.classList.remove('open');
+        };
+        openBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            drawer.classList.add('open');
+            overlay.classList.add('open');
+        });
+        closeBtn.addEventListener('click', closeDrawer);
+        overlay.addEventListener('click', closeDrawer);
+        drawer.querySelectorAll('a').forEach(a => a.addEventListener('click', closeDrawer));
+        if (drawerLogin) drawerLogin.addEventListener('click', closeDrawer);
+        if (drawerSignup) drawerSignup.addEventListener('click', closeDrawer);
+        if (drawerLogout) drawerLogout.addEventListener('click', e => {
+            e.preventDefault();
+            closeDrawer();
+            logoutUser();
+        });
     }
 
 });
