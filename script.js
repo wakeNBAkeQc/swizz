@@ -85,8 +85,18 @@ async function syncPinsFromFirestore() {
         console.error('Error syncing pins from Firestore:', err);
         pins = getPins();
     }
-    savePins(pins);
+
     const uid = firebase.auth().currentUser?.uid;
+    const remoteIdx = pins.findIndex(p => p.id === uid);
+    const hasLocalPin = localStorage.getItem('userPinIndex') !== null;
+
+    if (!hasLocalPin && remoteIdx >= 0) {
+        // User deleted the pin locally, don't restore it from Firestore
+        pins.splice(remoteIdx, 1);
+    }
+
+    savePins(pins);
+
     const idx = pins.findIndex(p => p.id === uid);
     if (idx >= 0) {
         localStorage.setItem('userPinIndex', String(idx));
@@ -386,15 +396,23 @@ async function removeUserPin(e) {
     if (!confirm('Supprimer définitivement votre pin ?')) {
         return;
     }
-    pins.splice(index, 1);
-    savePins(pins);
-    localStorage.removeItem('userPinIndex');
+
     if (uid && window.db) {
         try {
             await db.collection('pins').doc(uid).delete();
-        } catch (_) {
-            // ignore errors
+        } catch (err) {
+            alert('Impossible de supprimer le pin.');
+            return;
         }
+    }
+
+    pins.splice(index, 1);
+    savePins(pins);
+    localStorage.removeItem('userPinIndex');
+    mapPins = pins;
+    if (markers[index]) {
+        markers[index].remove();
+        markers.splice(index, 1);
     }
     if (userMarker) {
         userMarker.remove();
