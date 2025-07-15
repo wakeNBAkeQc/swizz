@@ -258,3 +258,8 @@ select {
     margin-top: 1em;
     padding-left: 1.2em;
 }
+
+#likes-count {
+    font-weight: bold;
+    margin-top: 0.5em;
+}

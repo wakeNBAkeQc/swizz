@@ -62,7 +62,8 @@ function register(e) {
           birthDate: dobStr,
           genre,
           photo: cred.user.photoURL || null,
-          photoURL: cred.user.photoURL || null
+          photoURL: cred.user.photoURL || null,
+          likes: 0
         })
       ]);
     })
@@ -103,7 +104,8 @@ function loginGoogle() {
         age: null,
         genre: null,
         photo: user.photoURL || null,
-        photoURL: user.photoURL || null
+        photoURL: user.photoURL || null,
+        likes: 0
       }, { merge: true });
     })
     .then(() => {
