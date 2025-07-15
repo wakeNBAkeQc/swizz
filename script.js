@@ -40,6 +40,35 @@ function savePins(pins) {
     localStorage.setItem('pins', JSON.stringify(pins));
 }
 
+async function saveUserPin(lat, lng) {
+    const user = firebase.auth().currentUser;
+    if (!user || !window.db) {
+        alert('Utilisateur non authentifié.');
+        return;
+    }
+    const info = loadUserInfo();
+    const pinData = {
+        uid: user.uid,
+        lat,
+        lng,
+        lastSeen: Date.now(),
+        gender: info.gender || '',
+        name: info.name || ''
+    };
+    try {
+        await db.collection('pins').doc(user.uid).set(pinData);
+        const pins = getPins().filter(p => p.id !== user.uid);
+        pins.push({ id: user.uid, ...pinData });
+        savePins(pins);
+        mapPins = pins;
+        localStorage.setItem('userPinIndex', user.uid);
+        alert('Pin sauvegardé');
+    } catch (err) {
+        console.error('saveUserPin error:', err);
+        alert('Erreur lors de la sauvegarde du pin');
+    }
+}
+
 async function syncUserInfoFromFirestore() {
     const uid = firebase.auth().currentUser?.uid;
     if (!uid || !window.db) return;
@@ -78,32 +107,21 @@ async function fetchFirestorePins() {
 }
 
 async function syncPinsFromFirestore() {
-    let pins = [];
+    if (!window.db) return [];
     try {
-        pins = await fetchFirestorePins();
+        const snap = await db.collection('pins').get();
+        const pins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        savePins(pins);
+        mapPins = pins;
+        const uid = firebase.auth().currentUser?.uid;
+        if (uid && !pins.some(p => p.id === uid)) {
+            localStorage.removeItem('userPinIndex');
+        }
+        return pins;
     } catch (err) {
-        console.error('Error syncing pins from Firestore:', err);
-        pins = getPins();
+        console.error('syncPinsFromFirestore error:', err);
+        return [];
     }
-
-    const uid = firebase.auth().currentUser?.uid;
-    const remoteIdx = pins.findIndex(p => p.id === uid);
-    const hasLocalPin = localStorage.getItem('userPinIndex') !== null;
-
-    if (!hasLocalPin && remoteIdx >= 0) {
-        // User deleted the pin locally, don't restore it from Firestore
-        pins.splice(remoteIdx, 1);
-    }
-
-    savePins(pins);
-
-    const idx = pins.findIndex(p => p.id === uid);
-    if (idx >= 0) {
-        localStorage.setItem('userPinIndex', String(idx));
-    } else {
-        localStorage.removeItem('userPinIndex');
-    }
-    return pins;
 }
 
 function loadFavorites() {
@@ -401,54 +419,38 @@ async function initMap() {
 }
 
 async function removeUserPin(e) {
-    if (e) {
-        if (e.originalEvent) {
-            e.originalEvent.stopPropagation();
-            e.originalEvent.preventDefault();
-        } else if (e.stopPropagation) {
-            e.stopPropagation();
-            if (e.preventDefault) e.preventDefault();
-        }
+    if (e && e.stopPropagation) {
+        e.stopPropagation();
+        if (e.preventDefault) e.preventDefault();
     }
-    const uid = firebase.auth().currentUser?.uid;
-    const pins = getPins();
-    const index = pins.findIndex(p => p.id === uid);
-    if (index === -1) {
-        alert("Vous n'avez pas encore placé de pin.");
+    const user = firebase.auth().currentUser;
+    if (!user || !window.db) {
+        alert('Utilisateur non authentifié.');
         return;
     }
-    if (!confirm('Supprimer définitivement votre pin ?')) {
-        return;
-    }
-
-    if (uid && window.db) {
-        try {
-            await db.collection('pins').doc(uid).delete();
-            const snap = await db.collection('pins').where('id', '==', uid).get();
-            const promises = [];
-            snap.forEach(doc => {
-                if (doc.id !== uid) promises.push(doc.ref.delete());
-            });
-            await Promise.all(promises);
-        } catch (err) {
-            alert('Impossible de supprimer le pin.');
-            return;
+    if (!confirm('Supprimer définitivement votre pin ?')) return;
+    const uid = user.uid;
+    try {
+        await db.collection('pins').doc(uid).delete();
+        const idx = mapPins.findIndex(p => p.id === uid);
+        const pins = getPins().filter(p => p.id !== uid);
+        savePins(pins);
+        mapPins = pins;
+        localStorage.removeItem('userPinIndex');
+        if (idx >= 0) {
+            markers[idx].remove();
+            markers.splice(idx, 1);
         }
+        if (userMarker) {
+            userMarker.remove();
+            userMarker = null;
+        }
+        alert('Pin supprimé');
+        location.reload();
+    } catch (err) {
+        console.error('removeUserPin error:', err);
+        alert('Impossible de supprimer le pin.');
     }
-
-    pins.splice(index, 1);
-    savePins(pins);
-    localStorage.removeItem('userPinIndex');
-    mapPins = pins;
-    if (markers[index]) {
-        markers[index].remove();
-        markers.splice(index, 1);
-    }
-    if (userMarker) {
-        userMarker.remove();
-        userMarker = null;
-    }
-    location.reload();
 }
 
 function displayRandomProfiles() {
