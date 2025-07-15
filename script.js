@@ -108,7 +108,7 @@ async function fetchFirestorePins() {
 }
 
 async function syncPinsFromFirestore() {
-    if (!window.db) return [];
+    if (!window.db) return null;
     try {
         const snap = await db.collection('pins').get();
         const pins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -126,7 +126,7 @@ async function syncPinsFromFirestore() {
         return pins;
     } catch (err) {
         console.error('syncPinsFromFirestore error:', err);
-        return [];
+        return null;
     }
 }
 
@@ -284,9 +284,11 @@ function initProfileForm() {
 }
 
 async function initMap() {
-    await syncPinsFromFirestore();
-    // Determine the current user's pin index
-    await cleanupPins();
+    const pinsFetched = await syncPinsFromFirestore();
+    // Determine the current user's pin index only when pins were fetched
+    if (pinsFetched) {
+        await cleanupPins();
+    }
 
     // Listen for storage changes from other tabs to keep state in sync
     window.addEventListener('storage', async e => {
@@ -575,8 +577,10 @@ function applyFilters() {
 document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
     await syncUserInfoFromFirestore();
-    await syncPinsFromFirestore();
-    await cleanupPins();
+    const pinsFetched = await syncPinsFromFirestore();
+    if (pinsFetched) {
+        await cleanupPins();
+    }
     displayRandomProfiles();
     displayFavorites();
     const btnState = localStorage.getItem('userPinIndex') !== null ? 'block' : 'none';
