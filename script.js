@@ -1,6 +1,4 @@
-if(!localStorage.getItem("ageVerified") && !location.pathname.endsWith("age.html")){
-  window.location.href="age.html";
-}
+
 
 function loadUserInfo() {
     const data = localStorage.getItem('userInfo');
@@ -237,6 +235,10 @@ function initMap() {
 
     map.on('click', e => {
         cleanupPins();
+        if (!localStorage.getItem('ageVerified')) {
+            window.location.href = 'age.html?redirect=map.html';
+            return;
+        }
         if (localStorage.getItem('userPinIndex') !== null || userMarker) {
             alert('Vous avez déjà ajouté un pin.');
             return;
