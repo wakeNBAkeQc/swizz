@@ -62,6 +62,14 @@ function register(e) {
 
 function login(e) {
   e.preventDefault();
+  const termsAccepted = document.getElementById('terms-check')?.checked;
+  const termsErr = document.getElementById('terms-error');
+  if (termsErr) termsErr.style.display = 'none';
+  if (!termsAccepted) {
+    if (termsErr) termsErr.style.display = 'block';
+    else alert("Tu dois accepter les conditions d'utilisation.");
+    return;
+  }
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   firebase.auth().signInWithEmailAndPassword(email, password)

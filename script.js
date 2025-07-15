@@ -37,6 +37,25 @@ let mapPins = [];
 let userIndex = null;
 let mapInstance = null;
 
+async function fetchFirestorePins() {
+    if (!window.db) return [];
+    const snap = await db.collection('pins').get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function syncPinsFromFirestore() {
+    const pins = await fetchFirestorePins();
+    savePins(pins);
+    const uid = firebase.auth().currentUser?.uid;
+    const idx = pins.findIndex(p => p.id === uid);
+    if (idx >= 0) {
+        localStorage.setItem('userPinIndex', String(idx));
+    } else {
+        localStorage.removeItem('userPinIndex');
+    }
+    return pins;
+}
+
 function loadFavorites() {
     return JSON.parse(localStorage.getItem('favPins') || '[]');
 }
@@ -159,7 +178,8 @@ function initProfileForm() {
     });
 }
 
-function initMap() {
+async function initMap() {
+    await syncPinsFromFirestore();
     // Ensure only one pin exists before initializing the map
     cleanupPins();
 
@@ -198,6 +218,10 @@ function initMap() {
     if (!Number.isNaN(userIndex) && pins[userIndex]) {
         pins[userIndex].lastSeen = Date.now();
         savePins(pins);
+        const uid = firebase.auth().currentUser?.uid;
+        if (uid && window.db) {
+            db.collection('pins').doc(uid).set(pins[userIndex], { merge: true });
+        }
     }
 
     map.on('popupopen', e => {
@@ -235,10 +259,6 @@ function initMap() {
 
     map.on('click', e => {
         cleanupPins();
-        if (!localStorage.getItem('ageVerified')) {
-            window.location.href = 'age.html?redirect=map.html';
-            return;
-        }
         if (localStorage.getItem('userPinIndex') !== null || userMarker) {
             alert('Vous avez déjà ajouté un pin.');
             return;
@@ -257,6 +277,10 @@ function initMap() {
         markers.push(marker);
         savePins(pins);
         localStorage.setItem('userPinIndex', pins.length - 1);
+        const uid = firebase.auth().currentUser?.uid;
+        if (uid && window.db) {
+            db.collection('pins').doc(uid).set({ lat: e.latlng.lat, lng: e.latlng.lng, ...pinData });
+        }
         userMarker = marker;
         userMarker.on('click', removeUserPin);
     });
@@ -292,6 +316,10 @@ function removeUserPin(e) {
     }
     savePins([]);
     localStorage.removeItem('userPinIndex');
+    const uid = firebase.auth().currentUser?.uid;
+    if (uid && window.db) {
+        db.collection('pins').doc(uid).delete().catch(() => {});
+    }
     if (userMarker) {
         userMarker.remove();
         userMarker = null;
@@ -336,6 +364,11 @@ function displayRandomProfiles() {
 function openMessageModal(idx) {
     const modal = document.getElementById('message-modal');
     if (!modal) return;
+    if (!localStorage.getItem('birthDate')) {
+        localStorage.setItem('msgTargetIndex', idx);
+        window.location.href = 'age.html?redirect=map.html';
+        return;
+    }
     modal.style.display = 'block';
     const textarea = modal.querySelector('textarea');
     const sendBtn = modal.querySelector('button');
@@ -410,10 +443,12 @@ function applyFilters() {
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('section').forEach(sec => sec.classList.add('fade-section'));
     cleanupPins();
+    syncPinsFromFirestore().then(() => {
+        displayRandomProfiles();
+        displayFavorites();
+    });
     initProfileForm();
     initAuthGuard(document.body.dataset.auth === 'required');
-    displayRandomProfiles();
-    displayFavorites();
     const btn = document.getElementById('remove-pin');
     if (btn) {
         btn.addEventListener('click', removeUserPin);
@@ -436,5 +471,11 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.addEventListener('click', e => {
             if (e.target === modal) modal.style.display = 'none';
         });
+    }
+
+    const pending = localStorage.getItem('msgTargetIndex');
+    if (pending !== null && localStorage.getItem('birthDate')) {
+        localStorage.removeItem('msgTargetIndex');
+        openMessageModal(parseInt(pending, 10));
     }
 });

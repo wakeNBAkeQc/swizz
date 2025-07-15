@@ -22,7 +22,14 @@
     <span id="user-info"></span>
   </nav>
   <main>
-    <h1>Connexion</h1>
+    <h1>Zwizz est un espace de rencontres réservé aux 18 ans et plus.</h1>
+    <p>En te connectant, tu confirmes être majeur(e) et accepter notre <a href="politique.html">politique d’utilisation</a>.<br>
+    Aucune tolérance pour les faux profils, les comportements irrespectueux ou les abus.</p>
+    <label style="margin-bottom:1em; display:block;">
+      <input type="checkbox" id="terms-check"> ✅ Coche la case pour continuer
+    </label>
+    <p id="terms-error" style="color:red; display:none;">Tu dois accepter les conditions d’utilisation avant d’accéder à la plateforme.</p>
+    <h2>Connexion</h2>
     <form id="login-form">
       <label for="login-email">Email</label>
       <input type="email" id="login-email" required>
