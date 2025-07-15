@@ -4,6 +4,9 @@ function initAuthGuard(requireAuth = false) {
       if (typeof syncPinsFromFirestore === 'function') {
         syncPinsFromFirestore().catch(() => {});
       }
+      if (typeof syncUserInfoFromFirestore === 'function') {
+        syncUserInfoFromFirestore().catch(() => {});
+      }
     }
     const span = document.getElementById('user-info');
     if (span) span.textContent = user ? (user.displayName || user.email) : '';
