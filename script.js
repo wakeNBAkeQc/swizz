@@ -715,29 +715,21 @@ async function sendInitialMessage(otherId, text) {
     const convoRef = db.collection('conversations').doc(convoId);
 
     try {
-        const convoDoc = await convoRef.get();
-        if (!convoDoc.exists) {
-            const [selfDoc, targetDoc] = await Promise.all([
-                db.collection('profils').doc(user.uid).get(),
-                db.collection('profils').doc(otherId).get()
-            ]);
-            const selfInfo = selfDoc.exists ? selfDoc.data() : {};
-            const targetInfo = targetDoc.exists ? targetDoc.data() : {};
-            await convoRef.set({
-                participants: [user.uid, otherId],
-                users: {
-                    [user.uid]: { name: selfInfo.nom || user.displayName || '', photo: selfInfo.photo || selfInfo.photoURL || null },
-                    [otherId]: { name: targetInfo.nom || '', photo: targetInfo.photo || targetInfo.photoURL || null }
-                },
-                lastMessage: sanitized,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        } else {
-            await convoRef.set({
-                lastMessage: sanitized,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-        }
+        const [selfDoc, targetDoc] = await Promise.all([
+            db.collection('profils').doc(user.uid).get(),
+            db.collection('profils').doc(otherId).get()
+        ]);
+        const selfInfo = selfDoc.exists ? selfDoc.data() : {};
+        const targetInfo = targetDoc.exists ? targetDoc.data() : {};
+        await convoRef.set({
+            participants: [user.uid, otherId],
+            users: {
+                [user.uid]: { name: selfInfo.nom || user.displayName || '', photo: selfInfo.photo || selfInfo.photoURL || null },
+                [otherId]: { name: targetInfo.nom || '', photo: targetInfo.photo || targetInfo.photoURL || null }
+            },
+            lastMessage: sanitized,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
 
         await convoRef.collection('messages').add({
             from: user.uid,
